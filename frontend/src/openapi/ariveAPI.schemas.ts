@@ -99,7 +99,7 @@ export type AddressCreateSchemaState = string | null;
 
 export type AddressCreateSchemaZip = string | null;
 
-export type AddressCreateSchemaAddressType = string | null;
+export type AddressCreateSchemaAddressType = AddressType | null;
 
 export interface AddressCreateSchema {
   address1: string;
@@ -117,7 +117,7 @@ export type AddressSchemaState = string | null;
 
 export type AddressSchemaZip = string | null;
 
-export type AddressSchemaAddressType = string | null;
+export type AddressSchemaAddressType = AddressType | null;
 
 export type AddressSchemaTeamId = number | null;
 
@@ -134,6 +134,19 @@ export interface AddressSchema {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Types of addresses.
+ */
+export type AddressType = typeof AddressType[keyof typeof AddressType];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AddressType = {
+  home: 'home',
+  work: 'work',
+  other: 'other',
+} as const;
 
 /**
  * Aggregation types for time series data.
@@ -1652,6 +1665,8 @@ export type RosterCreateSchemaTiktokHandle = string | null;
 
 export type RosterCreateSchemaYoutubeChannel = string | null;
 
+export type RosterCreateSchemaProfilePhotoId = unknown | null;
+
 export interface RosterCreateSchema {
   name: string;
   email?: RosterCreateSchemaEmail;
@@ -1663,6 +1678,7 @@ export interface RosterCreateSchema {
   facebook_handle?: RosterCreateSchemaFacebookHandle;
   tiktok_handle?: RosterCreateSchemaTiktokHandle;
   youtube_channel?: RosterCreateSchemaYoutubeChannel;
+  profile_photo_id?: RosterCreateSchemaProfilePhotoId;
 }
 
 export type RosterInDeliverableSchemaEmail = string | null;
@@ -1751,6 +1767,8 @@ export type RosterUpdateSchemaTiktokHandle = string | null;
 
 export type RosterUpdateSchemaYoutubeChannel = string | null;
 
+export type RosterUpdateSchemaProfilePhotoId = unknown | null;
+
 export interface RosterUpdateSchema {
   name?: RosterUpdateSchemaName;
   email?: RosterUpdateSchemaEmail;
@@ -1762,6 +1780,7 @@ export interface RosterUpdateSchema {
   facebook_handle?: RosterUpdateSchemaFacebookHandle;
   tiktok_handle?: RosterUpdateSchemaTiktokHandle;
   youtube_channel?: RosterUpdateSchemaYoutubeChannel;
+  profile_photo_id?: RosterUpdateSchemaProfilePhotoId;
 }
 
 export type SavedViewConfigSchemaColumnFiltersItem = TextFilterDefinition | RangeFilterDefinition | DateFilterDefinition | BooleanFilterDefinition | EnumFilterDefinition | ObjectFilterDefinition;
