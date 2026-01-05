@@ -137,6 +137,12 @@ class EmailFieldValue(BaseSchema, tag=FieldType.Email.value):
     value: str
 
 
+class PhoneFieldValue(BaseSchema, tag=FieldType.Phone.value):
+    """Phone number field value."""
+
+    value: str
+
+
 class URLFieldValue(BaseSchema, tag=FieldType.URL.value):
     """URL field value with optional display label."""
 
@@ -194,6 +200,7 @@ FieldValue = (
     | DatetimeFieldValue
     | USDFieldValue
     | EmailFieldValue
+    | PhoneFieldValue
     | URLFieldValue
     | ObjectFieldValue
     | TextFieldValue

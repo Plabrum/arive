@@ -1,6 +1,6 @@
 from abc import ABC
 from enum import StrEnum
-from typing import ClassVar, Generic, TypeVar
+from typing import ClassVar
 
 from msgspec import Struct
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +10,6 @@ from app.actions.enums import ActionIcon
 from app.actions.schemas import ActionExecutionResponse
 from app.base.models import BaseDBModel
 
-E = TypeVar("E", bound=StrEnum)
-O = TypeVar("O", bound=BaseDBModel)
-
 
 class UpdateStateData(Struct):
     """Data for updating an object's state."""
@@ -20,7 +17,7 @@ class UpdateStateData(Struct):
     new_state: str
 
 
-class BaseUpdateStateAction(BaseObjectAction[O, UpdateStateData], ABC, Generic[O, E]):
+class BaseUpdateStateAction[ObjectT: BaseDBModel, EnumT: StrEnum](BaseObjectAction[ObjectT, UpdateStateData], ABC):
     """Base class for state update actions via kanban drag-and-drop.
 
     Subclasses must set:
@@ -40,7 +37,7 @@ class BaseUpdateStateAction(BaseObjectAction[O, UpdateStateData], ABC, Generic[O
     @classmethod
     async def execute(
         cls,
-        obj: O,
+        obj: ObjectT,
         data: UpdateStateData,
         transaction: AsyncSession,
         deps,

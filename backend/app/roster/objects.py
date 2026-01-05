@@ -11,6 +11,7 @@ from app.objects.schemas import (
     FieldType,
     IntFieldValue,
     ObjectColumn,
+    PhoneFieldValue,
     StringFieldValue,
     media_to_image_field_value,
 )
@@ -66,6 +67,17 @@ class RosterObject(BaseObject[Roster]):
             include_in_list=True,
         ),
         ObjectColumn(
+            key="phone",
+            label="Phone",
+            type=FieldType.Phone,
+            value=lambda obj: PhoneFieldValue(value=obj.phone) if obj.phone else None,
+            sortable=True,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=True,
+        ),
+        ObjectColumn(
             key="gender",
             label="Gender",
             type=FieldType.String,
@@ -74,7 +86,7 @@ class RosterObject(BaseObject[Roster]):
             default_visible=True,
             editable=False,
             nullable=True,
-            include_in_list=False,
+            include_in_list=True,
         ),
         ObjectColumn(
             key="age",
