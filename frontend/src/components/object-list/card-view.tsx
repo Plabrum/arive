@@ -1,9 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { Mail, Instagram, Facebook, Youtube } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Image } from '@/components/ui/image';
+import {
+  InstagramIcon,
+  TikTokIcon,
+  FacebookIcon,
+  YouTubeIcon,
+} from '@/components/ui/platform-icons';
+import { StateFlag } from '@/components/ui/state-flag';
 import { cn } from '@/lib/utils';
 import type {
   ObjectListSchema,
@@ -78,13 +83,32 @@ function getColorFromString(str: string): string {
   return colors[hash % colors.length];
 }
 
-// Social platform icon mapping
+// Social platform icon mapping with colorful custom icons
 const socialIcons = {
-  instagram_handle: Instagram,
-  facebook_handle: Facebook,
-  tiktok_handle: null, // Lucide doesn't have TikTok icon
-  youtube_channel: Youtube,
+  instagram_handle: InstagramIcon,
+  facebook_handle: FacebookIcon,
+  tiktok_handle: TikTokIcon,
+  youtube_channel: YouTubeIcon,
 } as const;
+
+// Helper: Calculate age from birthdate
+function calculateAge(birthdate: string | null): number | null {
+  if (!birthdate) return null;
+  try {
+    const today = new Date();
+    const birth = new Date(birthdate);
+    // Check if date is valid
+    if (isNaN(birth.getTime())) return null;
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : null;
+  } catch {
+    return null;
+  }
+}
 
 export function CardView({
   data,
@@ -102,10 +126,7 @@ export function CardView({
     );
   }
 
-  // Find email column
-  const emailColumn = columns.find((col) => col.type === 'email');
-
-  // Find social handle columns
+  // Find relevant columns
   const socialColumns = columns.filter((col) =>
     [
       'instagram_handle',
@@ -115,6 +136,9 @@ export function CardView({
     ].includes(col.key)
   );
 
+  const birthdateColumn = columns.find((col) => col.key === 'birthdate');
+  const genderColumn = columns.find((col) => col.key === 'gender');
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -122,9 +146,20 @@ export function CardView({
           const imageField = getImageFromFields(item.fields);
           const imageUrl = imageField?.thumbnail_url || imageField?.url;
           const isSelected = selectedRows.has(item.id);
-          const emailValue = emailColumn
-            ? getFieldValue(item, emailColumn.key)
+
+          // Extract field values
+          const birthdate = birthdateColumn
+            ? getFieldValue(item, birthdateColumn.key)
             : null;
+          const age = calculateAge(birthdate);
+          const gender = genderColumn
+            ? getFieldValue(item, genderColumn.key)
+            : null;
+
+          // Extract city and state from subtitle (assuming format: "City, State")
+          const locationParts = item.subtitle?.split(', ') || [];
+          const city = locationParts[0] || null;
+          const state = locationParts[1] || null;
 
           return (
             <Card
@@ -157,53 +192,45 @@ export function CardView({
                     onRowClick(item);
                   }
                 }}
-                className="block p-2"
+                className="block p-4"
               >
-                {/* Image or initials */}
-                <div className="bg-muted relative aspect-square overflow-hidden rounded-md">
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={item.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  ) : (
-                    <div
-                      className={cn(
-                        'flex h-full w-full items-center justify-center',
-                        getColorFromString(item.title)
-                      )}
-                    >
-                      <span className="text-3xl font-semibold text-white">
-                        {getInitials(item.title)}
-                      </span>
-                    </div>
-                  )}
+                {/* Top section: Image on left, Name on right */}
+                <div className="flex gap-3">
+                  {/* Small image in top-left corner */}
+                  <div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div
+                        className={cn(
+                          'flex h-full w-full items-center justify-center',
+                          getColorFromString(item.title)
+                        )}
+                      >
+                        <span className="text-lg font-semibold text-white">
+                          {getInitials(item.title)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Name - middle-aligned, wraps to two lines */}
+                  <div className="flex flex-1 items-center">
+                    <h3 className="line-clamp-2 text-base font-semibold leading-tight">
+                      {item.title}
+                    </h3>
+                  </div>
                 </div>
 
-                {/* Metadata */}
-                <div className="space-y-2 p-4">
-                  {/* Title */}
-                  <h3 className="truncate font-semibold">{item.title}</h3>
-
-                  {/* Subtitle */}
-                  {item.subtitle && (
-                    <p className="text-muted-foreground truncate text-xs">
-                      {item.subtitle}
-                    </p>
-                  )}
-
-                  {/* Email */}
-                  {emailValue && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="text-muted-foreground h-3 w-3 shrink-0" />
-                      <span className="truncate text-sm">{emailValue}</span>
-                    </div>
-                  )}
-
+                {/* Metadata section below */}
+                <div className="mt-3 space-y-2">
                   {/* Social handles */}
                   {socialColumns.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-col gap-1.5">
                       {socialColumns.map((col) => {
                         const value = getFieldValue(item, col.key);
                         if (!value) return null;
@@ -212,18 +239,43 @@ export function CardView({
                           socialIcons[col.key as keyof typeof socialIcons];
 
                         return (
-                          <Badge
+                          <div
                             key={col.key}
-                            variant="secondary"
-                            className="gap-1 text-xs"
+                            className="flex items-center gap-2"
                           >
-                            {Icon && <Icon className="h-3 w-3" />}
-                            <span className="max-w-[100px] truncate">
-                              {value}
+                            {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                            <span className="text-muted-foreground truncate text-sm">
+                              @{value}
                             </span>
-                          </Badge>
+                          </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {/* Age */}
+                  {age !== null && (
+                    <div className="text-muted-foreground text-sm">
+                      Age: {age}
+                    </div>
+                  )}
+
+                  {/* City and State */}
+                  {(city || state) && (
+                    <div className="flex items-center gap-2">
+                      {state && <StateFlag state={state} className="text-muted-foreground h-4 w-4" />}
+                      <span className="text-muted-foreground text-sm">
+                        {city}
+                        {city && state && ', '}
+                        {state}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Gender */}
+                  {gender && (
+                    <div className="text-muted-foreground text-sm">
+                      {gender}
                     </div>
                   )}
                 </div>
