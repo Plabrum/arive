@@ -1,6 +1,8 @@
+import { CheckSquare, Square } from 'lucide-react';
 import { DataTableAppliedFilters } from '@/components/data-table/data-table-applied-filters';
 import { DataTableSearch } from '@/components/data-table/data-table-search';
 import { columnFiltersToRequestFilters } from '@/components/data-table/utils';
+import { Button } from '@/components/ui/button';
 import { configToColumnFilters } from './config-utils';
 import { ObjectListFilterButton } from './object-list-filter-button';
 import { ObjectListSortButton } from './object-list-sort-button';
@@ -39,6 +41,12 @@ interface ObjectListToolbarProps {
   enableSearch?: boolean;
   enableFilters?: boolean;
   enableSorting?: boolean;
+
+  // Selection mode (for mobile)
+  enableRowSelection?: boolean;
+  isSelectMode?: boolean;
+  onSelectModeChange?: (isSelectMode: boolean) => void;
+  selectedCount?: number;
 }
 
 /**
@@ -60,6 +68,10 @@ export function ObjectListToolbar({
   enableSearch = true,
   enableFilters = true,
   enableSorting = true,
+  enableRowSelection = false,
+  isSelectMode = false,
+  onSelectModeChange,
+  selectedCount = 0,
 }: ObjectListToolbarProps) {
   // Convert config to typed formats for components
   const columnFilters = configToColumnFilters(config);
@@ -95,6 +107,28 @@ export function ObjectListToolbar({
             filters={filters}
             onFiltersChange={onFiltersChange}
           />
+        )}
+
+        {/* Mobile select mode toggle - only show on mobile when row selection is enabled */}
+        {enableRowSelection && onSelectModeChange && (
+          <Button
+            variant={isSelectMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onSelectModeChange(!isSelectMode)}
+            className="md:hidden"
+          >
+            {isSelectMode ? (
+              <>
+                <CheckSquare className="mr-2 h-4 w-4" />
+                {selectedCount > 0 ? `${selectedCount} selected` : 'Select'}
+              </>
+            ) : (
+              <>
+                <Square className="mr-2 h-4 w-4" />
+                Select
+              </>
+            )}
+          </Button>
         )}
 
         {currentView && (

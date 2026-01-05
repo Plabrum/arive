@@ -7,13 +7,7 @@ import {
 } from '@/components/icons/social-icons';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Image } from '@/components/ui/image';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatPhoneNumber } from '@/lib/field-formatters';
 import { cn } from '@/lib/utils';
 import type {
@@ -29,6 +23,7 @@ interface CardViewProps {
   selectedRows: Set<string>;
   onRowSelectionChange: (rowId: string, selected: boolean) => void;
   onRowClick?: (row: ObjectListSchema) => void;
+  isSelectMode?: boolean;
 }
 
 // Helper: Extract image field value from ObjectListSchema fields
@@ -103,6 +98,11 @@ function getColorFromString(str: string): string {
   return colors[hash % colors.length];
 }
 
+// Helper: Capitalize first letter for display
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 // Social platform icon mapping
 const socialIcons = {
   instagram_handle: InstagramIcon,
@@ -118,6 +118,7 @@ export function CardView({
   selectedRows,
   onRowSelectionChange,
   onRowClick,
+  isSelectMode = false,
 }: CardViewProps) {
   if (!data || data.length === 0) {
     return (
@@ -172,22 +173,56 @@ export function CardView({
           return (
             <Card
               key={item.id}
-              className={cn(
-                'group relative overflow-hidden p-0 transition-all hover:shadow-md',
-                isSelected && 'ring-primary ring-2 ring-offset-2'
-              )}
+              className="group relative overflow-hidden p-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
             >
-              {/* Selection checkbox */}
+              {/* Selection checkbox - clean circular chip */}
               {enableRowSelection && (
-                <div className="absolute right-2 top-2 z-10">
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={(checked) =>
-                      onRowSelectionChange(item.id, checked === true)
-                    }
+                <div
+                  className={cn(
+                    'absolute right-3 top-3 z-10 transition-opacity duration-200',
+                    // Desktop: show on hover or when selected (always visible if selected)
+                    isSelected
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover:opacity-100 md:block',
+                    // Mobile: show only in select mode
+                    isSelected ? '' : 'md:opacity-0',
+                    isSelectMode || isSelected
+                      ? 'opacity-100'
+                      : 'hidden md:block'
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRowSelectionChange(item.id, !isSelected);
+                    }}
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200',
+                      'border-2 backdrop-blur-md',
+                      isSelected
+                        ? 'border-white bg-white shadow-md'
+                        : 'border-white/50 bg-black/30 hover:scale-110 hover:border-white/80 hover:bg-black/50'
+                    )}
                     aria-label={`Select ${item.title}`}
-                    className="bg-background border-2"
-                  />
+                  >
+                    {isSelected && (
+                      <svg
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        className="h-3.5 w-3.5"
+                      >
+                        <path
+                          d="M2 7L5.5 10.5L12 3.5"
+                          stroke="black"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               )}
 
@@ -208,7 +243,7 @@ export function CardView({
                     <Image
                       src={imageUrl}
                       alt={item.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <div
@@ -234,7 +269,7 @@ export function CardView({
                     {(genderValue || ageValue || cityValue) && (
                       <p className="text-muted-foreground shrink-0 text-xs">
                         {[
-                          genderValue,
+                          genderValue ? capitalize(genderValue) : null,
                           ageValue ? `${ageValue}` : null,
                           cityValue,
                         ]
@@ -260,7 +295,7 @@ export function CardView({
                     </div>
                   )}
 
-                  {/* Social media icons with tooltips */}
+                  {/* Social media icons with expandable handles */}
                   {socialColumns.length > 0 && (
                     <div className="flex items-center gap-2.5">
                       {socialColumns.map((col) => {
@@ -271,23 +306,15 @@ export function CardView({
                           socialIcons[col.key as keyof typeof socialIcons];
 
                         return Icon ? (
-                          <Tooltip key={col.key}>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                className="z-10 transition-opacity hover:opacity-80"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                }}
-                              >
-                                <Icon className="h-4 w-4" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                              <p className="text-xs">{value}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <div
+                            key={col.key}
+                            className="group/social flex items-center gap-1.5 overflow-hidden"
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="text-muted-foreground max-w-0 truncate text-xs transition-all duration-200 group-hover/social:max-w-[100px]">
+                              {value}
+                            </span>
+                          </div>
                         ) : (
                           <Badge
                             key={col.key}

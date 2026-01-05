@@ -166,6 +166,7 @@ export function ObjectList({
   const [pageIndex, setPageIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   // Action execution state
   const [pendingAction, setPendingAction] = useState<{
@@ -599,6 +600,12 @@ export function ObjectList({
         enableSearch={enableSearch}
         enableFilters={enableColumnFilters}
         enableSorting={enableSorting}
+        isSelectMode={isSelectMode}
+        onSelectModeChange={setIsSelectMode}
+        enableRowSelection={
+          enableRowSelection && config.display_mode !== 'table'
+        }
+        selectedCount={selectedRowsData.length}
       />
 
       {/* Conditional View Rendering */}
@@ -648,6 +655,7 @@ export function ObjectList({
           selectedRows={selectedRowsSet}
           onRowSelectionChange={handleViewSelection}
           onRowClick={onRowClick}
+          isSelectMode={isSelectMode}
         />
       )}
       {config.display_mode === 'list' && (
