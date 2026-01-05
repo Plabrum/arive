@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { format } from 'date-fns';
-import { CalendarIcon, Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
 import {
   useForm,
   FormProvider,
@@ -13,7 +12,6 @@ import {
   type DefaultValues,
   Controller,
 } from 'react-hook-form';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Command,
   CommandEmpty,
@@ -22,6 +20,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -576,9 +575,7 @@ export function createTypedForm<TFieldValues extends FieldValues>() {
 
   // ---------- Datetime input ----------
   function FormDatetime<N extends Name<Path<TFieldValues>>>(
-    props: BaseFieldProps<TFieldValues, N> & {
-      showTime?: boolean;
-    }
+    props: BaseFieldProps<TFieldValues, N>
   ) {
     const {
       name,
@@ -589,7 +586,6 @@ export function createTypedForm<TFieldValues extends FieldValues>() {
       rules,
       description,
       id,
-      showTime = false,
     } = props;
     const { control } = useFormContext<TFieldValues>();
     const htmlId = id ?? String(name);
@@ -606,6 +602,7 @@ export function createTypedForm<TFieldValues extends FieldValues>() {
           control={control}
           rules={{ required: RequiredMessage(required), ...rules }}
           render={({ field }) => {
+            // Parse the field value (string in RFC3339 format) to Date
             const fieldValue = field.value as string | Date | undefined;
             const dateValue = fieldValue
               ? typeof fieldValue === 'string'
@@ -614,75 +611,20 @@ export function createTypedForm<TFieldValues extends FieldValues>() {
               : undefined;
 
             return (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id={htmlId}
-                    variant="outline"
-                    className={cn(
-                      'mt-1 w-full justify-start text-left font-normal',
-                      !dateValue && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateValue ? (
-                      showTime ? (
-                        format(dateValue, 'PPP p')
-                      ) : (
-                        format(dateValue, 'PPP')
-                      )
-                    ) : (
-                      <span>{placeholder || 'Pick a date'}</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateValue}
-                    onSelect={(date) => {
-                      if (date) {
-                        // If we have an existing time component and showTime is true, preserve it
-                        if (showTime && dateValue) {
-                          const hours = dateValue.getHours();
-                          const minutes = dateValue.getMinutes();
-                          date.setHours(hours, minutes);
-                        }
-                        field.onChange(date.toISOString());
-                      } else {
-                        field.onChange(undefined);
-                      }
-                    }}
-                    initialFocus
-                    captionLayout="dropdown"
-                    fromYear={1920}
-                    toYear={new Date().getFullYear()}
-                  />
-                  {showTime && (
-                    <div className="border-t p-3">
-                      <Label htmlFor={`${htmlId}-time`} className="text-xs">
-                        Time
-                      </Label>
-                      <Input
-                        id={`${htmlId}-time`}
-                        type="time"
-                        value={dateValue ? format(dateValue, 'HH:mm') : '00:00'}
-                        onChange={(e) => {
-                          const [hours, minutes] = e.target.value
-                            .split(':')
-                            .map(Number);
-                          const newDate = dateValue
-                            ? new Date(dateValue)
-                            : new Date();
-                          newDate.setHours(hours, minutes);
-                          field.onChange(newDate.toISOString());
-                        }}
-                        className="mt-1"
-                      />
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                id={htmlId}
+                value={dateValue}
+                placeholder={placeholder}
+                onChange={(date) => {
+                  if (date) {
+                    // Format as date-only ISO string: "YYYY-MM-DD"
+                    field.onChange(date.toISOString().split('T')[0]);
+                  } else {
+                    field.onChange(undefined);
+                  }
+                }}
+                className="mt-1"
+              />
             );
           }}
         />
