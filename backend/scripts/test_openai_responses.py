@@ -162,9 +162,10 @@ Return only valid JSON.
                         logger.info(f"    Block attributes: {dir(content_block)}")
 
                         if content_block.type == "output_text":
-                            logger.info(
-                                f"    Text preview: {content_block.text[:200] if hasattr(content_block, 'text') else 'NO TEXT ATTR'}"  # type: ignore
+                            text_preview = (
+                                content_block.text[:200] if hasattr(content_block, "text") else "NO TEXT ATTR"
                             )
+                            logger.info(f"    Text preview: {text_preview}")  # type: ignore
 
         # Extract structured output
         logger.info("\n" + "=" * 80)

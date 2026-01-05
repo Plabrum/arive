@@ -12,13 +12,10 @@ This module provides utilities to:
 """
 
 import logging
-from typing import TypeVar
 
 import msgspec
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar("T", bound=msgspec.Struct)
 
 # Keywords that OpenAI's strict mode doesn't support
 UNSUPPORTED_KEYS = {
@@ -234,7 +231,7 @@ def _add_strict_requirements(schema: dict) -> None:
                     _add_strict_requirements(item)
 
 
-def parse_structured_response(response, schema_type: type[T]) -> T:
+def parse_structured_response[T: msgspec.Struct](response, schema_type: type[T]) -> T:
     """
     Parse structured output from an OpenAI Responses API response.
 

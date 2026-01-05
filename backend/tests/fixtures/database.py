@@ -153,13 +153,6 @@ async def db_session(test_engine, setup_database) -> AsyncGenerator[AsyncSession
     - When tests call commit(), it only commits the SAVEPOINT, then starts a new one
     - The outer transaction rollback undoes everything
     """
-    session_maker = async_sessionmaker(
-        test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
     connection = await test_engine.connect()
     transaction = await connection.begin()
 
