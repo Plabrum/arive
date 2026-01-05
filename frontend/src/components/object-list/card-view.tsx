@@ -1,9 +1,15 @@
 import { Link } from '@tanstack/react-router';
-import { Mail, Instagram, Facebook, Youtube } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Image } from '@/components/ui/image';
+import {
+  InstagramIcon,
+  TikTokIcon,
+  FacebookIcon,
+  YouTubeIcon,
+} from '@/components/ui/platform-icons';
 import { cn } from '@/lib/utils';
 import type {
   ObjectListSchema,
@@ -78,12 +84,12 @@ function getColorFromString(str: string): string {
   return colors[hash % colors.length];
 }
 
-// Social platform icon mapping
+// Social platform icon mapping with colorful custom icons
 const socialIcons = {
-  instagram_handle: Instagram,
-  facebook_handle: Facebook,
-  tiktok_handle: null, // Lucide doesn't have TikTok icon
-  youtube_channel: Youtube,
+  instagram_handle: InstagramIcon,
+  facebook_handle: FacebookIcon,
+  tiktok_handle: TikTokIcon,
+  youtube_channel: YouTubeIcon,
 } as const;
 
 export function CardView({
@@ -203,7 +209,7 @@ export function CardView({
 
                   {/* Social handles */}
                   {socialColumns.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-col gap-1.5">
                       {socialColumns.map((col) => {
                         const value = getFieldValue(item, col.key);
                         if (!value) return null;
@@ -212,16 +218,15 @@ export function CardView({
                           socialIcons[col.key as keyof typeof socialIcons];
 
                         return (
-                          <Badge
+                          <div
                             key={col.key}
-                            variant="secondary"
-                            className="gap-1 text-xs"
+                            className="flex items-center gap-2"
                           >
-                            {Icon && <Icon className="h-3 w-3" />}
-                            <span className="max-w-[100px] truncate">
-                              {value}
+                            {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                            <span className="text-muted-foreground truncate text-sm">
+                              @{value}
                             </span>
-                          </Badge>
+                          </div>
                         );
                       })}
                     </div>
