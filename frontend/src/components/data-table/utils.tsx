@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Image } from '@/components/ui/image';
+import { formatPhoneNumber } from '@/lib/field-formatters';
 import { humanizeEnumValue } from '@/lib/format';
 import type {
   SortDefinition,
@@ -454,6 +455,19 @@ export function formatCellValue(
         return <div className="text-right font-mono">{String(rawValue)}</div>;
       }
       return '-';
+    }
+
+    case 'phone': {
+      const phoneValue = String(value.value || '');
+      const formattedPhone = formatPhoneNumber(phoneValue);
+      return (
+        <div
+          className="max-w-[200px] truncate font-mono"
+          title={formattedPhone}
+        >
+          {formattedPhone}
+        </div>
+      );
     }
 
     case 'string':

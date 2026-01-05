@@ -91,7 +91,7 @@ def apply_filter(query: Select, model_class: type[BaseDBModel], filter_def: Filt
 def get_filter_by_field_type(field_type: FieldType) -> FilterType:
     """Get default available filters for a field type."""
     match field_type:
-        case FieldType.String | FieldType.Email | FieldType.URL | FieldType.Text:
+        case FieldType.String | FieldType.Email | FieldType.Phone | FieldType.URL | FieldType.Text:
             return FilterType.text_filter
         case FieldType.Int | FieldType.Float | FieldType.USD:
             return FilterType.range_filter
@@ -315,7 +315,15 @@ def get_default_aggregation(field_type: FieldType) -> AggregationType:
     match field_type:
         case FieldType.Int | FieldType.Float | FieldType.USD:
             return AggregationType.sum
-        case FieldType.String | FieldType.Enum | FieldType.Bool | FieldType.Email | FieldType.URL | FieldType.Text:
+        case (
+            FieldType.String
+            | FieldType.Enum
+            | FieldType.Bool
+            | FieldType.Email
+            | FieldType.Phone
+            | FieldType.URL
+            | FieldType.Text
+        ):
             return AggregationType.count_
         case FieldType.Date | FieldType.Datetime:
             return AggregationType.count_
@@ -368,9 +376,9 @@ def _infer_field_type_from_column(column) -> FieldType:
     col_type = column.type
 
     # Map SQLAlchemy types to FieldType
-    if isinstance(col_type, (Integer,)):
+    if isinstance(col_type, Integer):
         return FieldType.Int
-    elif isinstance(col_type, (Float, Numeric)):
+    elif isinstance(col_type, Float | Numeric):
         return FieldType.Float
     elif isinstance(col_type, Boolean):
         return FieldType.Bool
@@ -380,7 +388,7 @@ def _infer_field_type_from_column(column) -> FieldType:
         return FieldType.Datetime
     elif isinstance(col_type, Enum):
         return FieldType.Enum
-    elif isinstance(col_type, (String, Text)):
+    elif isinstance(col_type, String | Text):
         return FieldType.String
     else:
         # Default to String for unknown types (treat as categorical)

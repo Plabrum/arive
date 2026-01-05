@@ -1,9 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { Mail, Instagram, Facebook, Youtube } from 'lucide-react';
+import {
+  InstagramIcon,
+  FacebookIcon,
+  TikTokIcon,
+  YouTubeIcon,
+} from '@/components/icons/social-icons';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Image } from '@/components/ui/image';
+import { formatPhoneNumber } from '@/lib/field-formatters';
 import { cn } from '@/lib/utils';
 import type {
   ObjectListSchema,
@@ -18,6 +23,7 @@ interface CardViewProps {
   selectedRows: Set<string>;
   onRowSelectionChange: (rowId: string, selected: boolean) => void;
   onRowClick?: (row: ObjectListSchema) => void;
+  isSelectMode?: boolean;
 }
 
 // Helper: Extract image field value from ObjectListSchema fields
@@ -52,6 +58,20 @@ function getFieldValue(row: ObjectListSchema, key: string): string | null {
   return null;
 }
 
+// Helper: Get number field value by key
+function getNumberFieldValue(
+  row: ObjectListSchema,
+  key: string
+): number | null {
+  const field = row.fields?.find((f) => f.key === key);
+  if (!field?.value || typeof field.value !== 'object') return null;
+  if ('value' in field.value) {
+    const val = field.value.value;
+    return typeof val === 'number' ? val : null;
+  }
+  return null;
+}
+
 // Helper: Generate initials from title
 function getInitials(title: string): string {
   return title
@@ -78,12 +98,17 @@ function getColorFromString(str: string): string {
   return colors[hash % colors.length];
 }
 
+// Helper: Capitalize first letter for display
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 // Social platform icon mapping
 const socialIcons = {
-  instagram_handle: Instagram,
-  facebook_handle: Facebook,
-  tiktok_handle: null, // Lucide doesn't have TikTok icon
-  youtube_channel: Youtube,
+  instagram_handle: InstagramIcon,
+  facebook_handle: FacebookIcon,
+  tiktok_handle: TikTokIcon,
+  youtube_channel: YouTubeIcon,
 } as const;
 
 export function CardView({
@@ -93,6 +118,7 @@ export function CardView({
   selectedRows,
   onRowSelectionChange,
   onRowClick,
+  isSelectMode = false,
 }: CardViewProps) {
   if (!data || data.length === 0) {
     return (
@@ -102,8 +128,14 @@ export function CardView({
     );
   }
 
-  // Find email column
+  // Find contact columns
   const emailColumn = columns.find((col) => col.type === 'email');
+  const phoneColumn = columns.find((col) => col.type === 'phone');
+
+  // Find demographic columns
+  const cityColumn = columns.find((col) => col.key === 'city');
+  const ageColumn = columns.find((col) => col.key === 'age');
+  const genderColumn = columns.find((col) => col.key === 'gender');
 
   // Find social handle columns
   const socialColumns = columns.filter((col) =>
@@ -125,26 +157,72 @@ export function CardView({
           const emailValue = emailColumn
             ? getFieldValue(item, emailColumn.key)
             : null;
+          const phoneValue = phoneColumn
+            ? getFieldValue(item, phoneColumn.key)
+            : null;
+          const cityValue = cityColumn
+            ? getFieldValue(item, cityColumn.key)
+            : null;
+          const ageValue = ageColumn
+            ? getNumberFieldValue(item, ageColumn.key)
+            : null;
+          const genderValue = genderColumn
+            ? getFieldValue(item, genderColumn.key)
+            : null;
 
           return (
             <Card
               key={item.id}
-              className={cn(
-                'group relative overflow-hidden transition-all hover:shadow-md',
-                isSelected && 'ring-primary ring-2 ring-offset-2'
-              )}
+              className="group relative overflow-hidden p-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
             >
-              {/* Selection checkbox */}
+              {/* Selection checkbox - clean circular chip */}
               {enableRowSelection && (
-                <div className="absolute right-2 top-2 z-10">
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={(checked) =>
-                      onRowSelectionChange(item.id, checked === true)
-                    }
+                <div
+                  className={cn(
+                    'absolute right-3 top-3 z-10 transition-opacity duration-200',
+                    // Desktop: show on hover or when selected (always visible if selected)
+                    isSelected
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover:opacity-100 md:block',
+                    // Mobile: show only in select mode
+                    isSelected ? '' : 'md:opacity-0',
+                    isSelectMode || isSelected
+                      ? 'opacity-100'
+                      : 'hidden md:block'
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRowSelectionChange(item.id, !isSelected);
+                    }}
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200',
+                      'border-2 backdrop-blur-md',
+                      isSelected
+                        ? 'border-white bg-white shadow-md'
+                        : 'border-white/50 bg-black/30 hover:scale-110 hover:border-white/80 hover:bg-black/50'
+                    )}
                     aria-label={`Select ${item.title}`}
-                    className="bg-background border-2"
-                  />
+                  >
+                    {isSelected && (
+                      <svg
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        className="h-3.5 w-3.5"
+                      >
+                        <path
+                          d="M2 7L5.5 10.5L12 3.5"
+                          stroke="black"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               )}
 
@@ -157,7 +235,7 @@ export function CardView({
                     onRowClick(item);
                   }
                 }}
-                className="block p-2"
+                className="block px-2 pt-2"
               >
                 {/* Image or initials */}
                 <div className="bg-muted relative aspect-square overflow-hidden rounded-md">
@@ -165,7 +243,7 @@ export function CardView({
                     <Image
                       src={imageUrl}
                       alt={item.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <div
@@ -182,28 +260,44 @@ export function CardView({
                 </div>
 
                 {/* Metadata */}
-                <div className="space-y-2 p-4">
-                  {/* Title */}
-                  <h3 className="truncate font-semibold">{item.title}</h3>
+                <div className="flex flex-col gap-2 p-3">
+                  {/* Title and Demographics row */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="truncate text-base font-semibold leading-tight">
+                      {item.title}
+                    </h3>
+                    {(genderValue || ageValue || cityValue) && (
+                      <p className="text-muted-foreground shrink-0 text-xs">
+                        {[
+                          genderValue ? capitalize(genderValue) : null,
+                          ageValue ? `${ageValue}` : null,
+                          cityValue,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    )}
+                  </div>
 
-                  {/* Subtitle */}
-                  {item.subtitle && (
-                    <p className="text-muted-foreground truncate text-xs">
-                      {item.subtitle}
-                    </p>
-                  )}
-
-                  {/* Email */}
-                  {emailValue && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="text-muted-foreground h-3 w-3 shrink-0" />
-                      <span className="truncate text-sm">{emailValue}</span>
+                  {/* Contact info - Email and Phone as text */}
+                  {(emailValue || phoneValue) && (
+                    <div className="flex flex-col gap-0.5">
+                      {emailValue && (
+                        <span className="text-muted-foreground truncate text-xs">
+                          {emailValue}
+                        </span>
+                      )}
+                      {phoneValue && (
+                        <span className="text-muted-foreground truncate text-xs">
+                          {formatPhoneNumber(phoneValue)}
+                        </span>
+                      )}
                     </div>
                   )}
 
-                  {/* Social handles */}
+                  {/* Social media icons with expandable handles */}
                   {socialColumns.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex items-center gap-2.5">
                       {socialColumns.map((col) => {
                         const value = getFieldValue(item, col.key);
                         if (!value) return null;
@@ -211,14 +305,23 @@ export function CardView({
                         const Icon =
                           socialIcons[col.key as keyof typeof socialIcons];
 
-                        return (
+                        return Icon ? (
+                          <div
+                            key={col.key}
+                            className="group/social flex items-center gap-1.5 overflow-hidden"
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="text-muted-foreground max-w-0 truncate text-xs transition-all duration-200 group-hover/social:max-w-[100px]">
+                              {value}
+                            </span>
+                          </div>
+                        ) : (
                           <Badge
                             key={col.key}
                             variant="secondary"
-                            className="gap-1 text-xs"
+                            className="h-5 gap-0.5 px-1.5 text-[10px]"
                           >
-                            {Icon && <Icon className="h-3 w-3" />}
-                            <span className="max-w-[100px] truncate">
+                            <span className="max-w-[60px] truncate">
                               {value}
                             </span>
                           </Badge>

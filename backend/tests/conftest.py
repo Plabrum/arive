@@ -32,7 +32,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 # Import and discover all models before tests run
 # This ensures SQLAlchemy knows about all models for migrations and queries
 
-from app.utils.discovery import discover_and_import
+from app.utils.discovery import discover_and_import  # noqa: E402
 
 discover_and_import(["models.py", "models/**/*.py"], base_path="app")
 
@@ -42,4 +42,4 @@ discover_and_import(["models.py", "models/**/*.py"], base_path="app")
 # Import all fixtures from the fixtures package to make them available to tests
 # Using star imports here is intentional for pytest fixture discovery
 
-from tests.fixtures import *  # noqa: F401, F403
+from tests.fixtures import *  # noqa: E402, F401, F403

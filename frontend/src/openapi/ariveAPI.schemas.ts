@@ -1186,6 +1186,7 @@ export const FieldType = {
   datetime: 'datetime',
   usd: 'usd',
   email: 'email',
+  phone: 'phone',
   url: 'url',
   text: 'text',
   image: 'image',
@@ -1454,7 +1455,7 @@ export interface NumericalTimeSeriesData {
   type: 'numerical';
 }
 
-export type ObjectFieldDTOValue = StringFieldValue | IntFieldValue | FloatFieldValue | BoolFieldValue | EnumFieldValue | DateFieldValue | DatetimeFieldValue | USDFieldValue | EmailFieldValue | URLFieldValue | ObjectFieldValue | TextFieldValue | ImageFieldValue | null;
+export type ObjectFieldDTOValue = StringFieldValue | IntFieldValue | FloatFieldValue | BoolFieldValue | EnumFieldValue | DateFieldValue | DatetimeFieldValue | USDFieldValue | EmailFieldValue | PhoneFieldValue | URLFieldValue | ObjectFieldValue | TextFieldValue | ImageFieldValue | null;
 
 export type ObjectFieldDTOLabel = string | null;
 
@@ -1573,6 +1574,11 @@ export interface PaymentBlockExtractionSchema {
   amount_usd?: PaymentBlockExtractionSchemaAmountUsd;
   percent?: PaymentBlockExtractionSchemaPercent;
   net_days?: PaymentBlockExtractionSchemaNetDays;
+}
+
+export interface PhoneFieldValue {
+  value: string;
+  type: 'phone';
 }
 
 export interface PublishDeliverableAction {
@@ -1724,6 +1730,10 @@ export type RosterSchemaTeamId = number | null;
 
 export type RosterSchemaThread = ThreadUnreadInfo | null;
 
+export type RosterSchemaCity = string | null;
+
+export type RosterSchemaAge = number | null;
+
 export interface RosterSchema {
   /** SQID-encoded identifier */
   id: string;
@@ -1744,6 +1754,8 @@ export interface RosterSchema {
   team_id?: RosterSchemaTeamId;
   actions: ActionDTO[];
   thread?: RosterSchemaThread;
+  city?: RosterSchemaCity;
+  age?: RosterSchemaAge;
 }
 
 export type RosterUpdateSchemaEmail = string | null;

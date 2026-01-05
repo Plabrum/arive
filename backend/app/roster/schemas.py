@@ -28,6 +28,8 @@ class RosterSchema(BaseSchema):
     team_id: int | None
     actions: list[ActionDTO]
     thread: ThreadUnreadInfo | None = None
+    city: str | None = None
+    age: int | None = None
 
 
 class RosterUpdateSchema(BaseSchema):

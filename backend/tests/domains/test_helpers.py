@@ -118,11 +118,11 @@ def generate_minimal_action_data(action_class: type) -> dict[str, Any]:
             minimal_data = {}
             for field_name, field_type in data_type.__annotations__.items():
                 # Generate minimal valid values based on type
-                if field_type == str or field_type == str | None:
+                if field_type is str or field_type == str | None:
                     minimal_data[field_name] = "test"
-                elif field_type == int or field_type == int | None:
+                elif field_type is int or field_type == int | None:
                     minimal_data[field_name] = 1
-                elif field_type == bool or field_type == bool | None:
+                elif field_type is bool or field_type == bool | None:
                     minimal_data[field_name] = True
                 # Add more type handlers as needed
             return minimal_data

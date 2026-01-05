@@ -41,6 +41,7 @@ class FieldType(StrEnum):
     Datetime = auto()
     USD = auto()
     Email = auto()
+    Phone = auto()
     URL = auto()
     Text = auto()
     Image = auto()

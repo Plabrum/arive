@@ -1,5 +1,11 @@
 import { Link } from '@tanstack/react-router';
-import { Mail, Instagram, Facebook, Youtube } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import {
+  InstagramIcon,
+  FacebookIcon,
+  TikTokIcon,
+  YouTubeIcon,
+} from '@/components/icons/social-icons';
 import { Badge } from '@/components/ui/badge';
 import {
   CardRow,
@@ -89,10 +95,10 @@ function getColorFromString(str: string): string {
 
 // Social platform icon mapping
 const socialIcons = {
-  instagram_handle: Instagram,
-  facebook_handle: Facebook,
-  tiktok_handle: null, // Lucide doesn't have TikTok icon
-  youtube_channel: Youtube,
+  instagram_handle: InstagramIcon,
+  facebook_handle: FacebookIcon,
+  tiktok_handle: TikTokIcon,
+  youtube_channel: YouTubeIcon,
 } as const;
 
 export function ListView({

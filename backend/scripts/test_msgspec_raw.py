@@ -9,9 +9,9 @@ from pathlib import Path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-import msgspec
+import msgspec  # noqa: E402
 
-from app.agents.schemas import CampaignExtractionSchema
+from app.agents.schemas import CampaignExtractionSchema  # noqa: E402
 
 
 def main():

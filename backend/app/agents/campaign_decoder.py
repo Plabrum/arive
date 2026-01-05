@@ -85,7 +85,8 @@ SECTION 2 — DELIVERABLE EXTRACTION RULES
 8. Extract a structured list of deliverables, each containing:
    - title (string): Short descriptive title (e.g., "Instagram Feed Post", "TikTok Video #1")
    - platforms (enum): ONE of: instagram, tiktok, youtube, facebook, twitter, linkedin, pinterest, snapchat, other
-   - deliverable_type (enum or null): Specific type like instagram_feed_post, instagram_story, tiktok_video, youtube_video, etc.
+   - deliverable_type (enum or null): Specific type like instagram_feed_post,
+     instagram_story, tiktok_video, youtube_video, etc.
    - count (integer): Number of this deliverable type (default: 1)
    - posting_date (datetime): ISO 8601 datetime for when content should be posted
    - posting_start_date (date or null): Start of posting window if range is specified
@@ -99,7 +100,8 @@ SECTION 2 — DELIVERABLE EXTRACTION RULES
    - extraction_notes (string or null): Any ambiguities or clarifications about this deliverable
 
 9. Deliverable type normalization rules:
-   - If the deliverable mentions syndication, reposting, or amplification on Instagram → deliverable_type = "instagram_feed_post"
+   - If the deliverable mentions syndication, reposting, or amplification on
+     Instagram → deliverable_type = "instagram_feed_post"
    - "Feed Post" → instagram_feed_post
    - "Story" or "Stories" → instagram_story
    - "Reel" or "Reels" → instagram_reel

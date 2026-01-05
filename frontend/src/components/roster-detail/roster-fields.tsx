@@ -73,6 +73,50 @@ export function RosterFields({ roster }: RosterFieldsProps) {
             </div>
           )}
 
+          {roster.age !== null && roster.age !== undefined && (
+            <div className="space-y-1">
+              <dt className="text-muted-foreground text-sm font-medium">Age</dt>
+              <dd className="text-sm">{roster.age} years old</dd>
+            </div>
+          )}
+
+          {roster.gender && (
+            <div className="space-y-1">
+              <dt className="text-muted-foreground text-sm font-medium">
+                Gender
+              </dt>
+              <dd className="text-sm">{roster.gender}</dd>
+            </div>
+          )}
+
+          {roster.city && (
+            <div className="space-y-1">
+              <dt className="text-muted-foreground text-sm font-medium">
+                City
+              </dt>
+              <dd className="text-sm">{roster.city}</dd>
+            </div>
+          )}
+
+          {roster.address && (
+            <div className="space-y-1">
+              <dt className="text-muted-foreground text-sm font-medium">
+                Address
+              </dt>
+              <dd className="text-sm">
+                {[
+                  roster.address.address1,
+                  roster.address.address2,
+                  roster.address.city,
+                  roster.address.state,
+                  roster.address.zip,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+              </dd>
+            </div>
+          )}
+
           {roster.instagram_handle && (
             <div className="space-y-1">
               <dt className="text-muted-foreground text-sm font-medium">
