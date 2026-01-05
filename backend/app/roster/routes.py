@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.actions.enums import ActionGroupType
 from app.actions.registry import ActionRegistry
+from app.addresses.schemas import AddressSchema
 from app.auth.guards import requires_session
 from app.roster.models import Roster
 from app.roster.schemas import RosterSchema, RosterUpdateSchema
@@ -43,6 +44,23 @@ async def get_roster(
     # Convert thread to unread info using the mixin method
     thread_info = roster.get_thread_unread_info(request.user)
 
+    # Convert address to schema
+    address_schema = None
+    if roster.address:
+        address_schema = AddressSchema(
+            id=roster.address.id,
+            address1=roster.address.address1,
+            address2=roster.address.address2,
+            city=roster.address.city,
+            state=roster.address.state,
+            zip=roster.address.zip,
+            country=roster.address.country,
+            address_type=roster.address.address_type,
+            created_at=roster.address.created_at,
+            updated_at=roster.address.updated_at,
+            team_id=roster.address.team_id,
+        )
+
     # Compute city from address
     city = roster.address.city if roster.address else None
 
@@ -61,7 +79,7 @@ async def get_roster(
         phone=roster.phone,
         birthdate=roster.birthdate,
         gender=roster.gender,
-        address=roster.address,
+        address=address_schema,
         instagram_handle=roster.instagram_handle,
         facebook_handle=roster.facebook_handle,
         tiktok_handle=roster.tiktok_handle,
@@ -99,6 +117,23 @@ async def update_roster(
         team_id=roster.team_id,
     )
 
+    # Convert address to schema
+    address_schema = None
+    if roster.address:
+        address_schema = AddressSchema(
+            id=roster.address.id,
+            address1=roster.address.address1,
+            address2=roster.address.address2,
+            city=roster.address.city,
+            state=roster.address.state,
+            zip=roster.address.zip,
+            country=roster.address.country,
+            address_type=roster.address.address_type,
+            created_at=roster.address.created_at,
+            updated_at=roster.address.updated_at,
+            team_id=roster.address.team_id,
+        )
+
     # Compute city from address
     city = roster.address.city if roster.address else None
 
@@ -117,7 +152,7 @@ async def update_roster(
         phone=roster.phone,
         birthdate=roster.birthdate,
         gender=roster.gender,
-        address=roster.address,
+        address=address_schema,
         instagram_handle=roster.instagram_handle,
         facebook_handle=roster.facebook_handle,
         tiktok_handle=roster.tiktok_handle,

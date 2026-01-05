@@ -66,6 +66,43 @@ class RosterObject(BaseObject[Roster]):
             include_in_list=True,
         ),
         ObjectColumn(
+            key="gender",
+            label="Gender",
+            type=FieldType.String,
+            value=lambda obj: StringFieldValue(value=obj.gender) if obj.gender else None,
+            sortable=True,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=False,
+        ),
+        ObjectColumn(
+            key="age",
+            label="Age",
+            type=FieldType.Int,
+            value=lambda obj: (
+                IntFieldValue(value=(datetime.now(tz=UTC).date() - obj.birthdate).days // 365)
+                if obj.birthdate
+                else None
+            ),
+            sortable=False,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=True,
+        ),
+        ObjectColumn(
+            key="city",
+            label="City",
+            type=FieldType.String,
+            value=lambda obj: StringFieldValue(value=obj.address.city) if obj.address else None,
+            sortable=False,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=True,
+        ),
+        ObjectColumn(
             key="instagram_handle",
             label="Instagram",
             type=FieldType.String,
@@ -131,32 +168,6 @@ class RosterObject(BaseObject[Roster]):
             type=FieldType.String,
             value=lambda obj: StringFieldValue(value=obj.youtube_channel) if obj.youtube_channel else None,
             sortable=True,
-            default_visible=True,
-            editable=False,
-            nullable=True,
-            include_in_list=True,
-        ),
-        ObjectColumn(
-            key="city",
-            label="City",
-            type=FieldType.String,
-            value=lambda obj: StringFieldValue(value=obj.address.city) if obj.address else None,
-            sortable=False,
-            default_visible=True,
-            editable=False,
-            nullable=True,
-            include_in_list=True,
-        ),
-        ObjectColumn(
-            key="age",
-            label="Age",
-            type=FieldType.Int,
-            value=lambda obj: (
-                IntFieldValue(value=(datetime.now(tz=UTC).date() - obj.birthdate).days // 365)
-                if obj.birthdate
-                else None
-            ),
-            sortable=False,
             default_visible=True,
             editable=False,
             nullable=True,
