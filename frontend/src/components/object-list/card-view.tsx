@@ -52,6 +52,20 @@ function getFieldValue(row: ObjectListSchema, key: string): string | null {
   return null;
 }
 
+// Helper: Get number field value by key
+function getNumberFieldValue(
+  row: ObjectListSchema,
+  key: string
+): number | null {
+  const field = row.fields?.find((f) => f.key === key);
+  if (!field?.value || typeof field.value !== 'object') return null;
+  if ('value' in field.value) {
+    const val = field.value.value;
+    return typeof val === 'number' ? val : null;
+  }
+  return null;
+}
+
 // Helper: Generate initials from title
 function getInitials(title: string): string {
   return title
@@ -105,6 +119,10 @@ export function CardView({
   // Find email column
   const emailColumn = columns.find((col) => col.type === 'email');
 
+  // Find city and age columns
+  const cityColumn = columns.find((col) => col.key === 'city');
+  const ageColumn = columns.find((col) => col.key === 'age');
+
   // Find social handle columns
   const socialColumns = columns.filter((col) =>
     [
@@ -124,6 +142,12 @@ export function CardView({
           const isSelected = selectedRows.has(item.id);
           const emailValue = emailColumn
             ? getFieldValue(item, emailColumn.key)
+            : null;
+          const cityValue = cityColumn
+            ? getFieldValue(item, cityColumn.key)
+            : null;
+          const ageValue = ageColumn
+            ? getNumberFieldValue(item, ageColumn.key)
             : null;
 
           return (
@@ -190,6 +214,15 @@ export function CardView({
                   {item.subtitle && (
                     <p className="text-muted-foreground truncate text-xs">
                       {item.subtitle}
+                    </p>
+                  )}
+
+                  {/* City and Age */}
+                  {(cityValue || ageValue) && (
+                    <p className="text-muted-foreground text-xs">
+                      {[cityValue, ageValue ? `${ageValue} years old` : null]
+                        .filter(Boolean)
+                        .join(' • ')}
                     </p>
                   )}
 

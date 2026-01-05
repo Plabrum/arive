@@ -1,3 +1,5 @@
+from datetime import UTC
+
 from litestar import Request, Router, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +43,17 @@ async def get_roster(
     # Convert thread to unread info using the mixin method
     thread_info = roster.get_thread_unread_info(request.user)
 
+    # Compute city from address
+    city = roster.address.city if roster.address else None
+
+    # Compute age from birthdate
+    age = None
+    if roster.birthdate:
+        from datetime import datetime
+
+        today = datetime.now(tz=UTC).date()
+        age = (today - roster.birthdate).days // 365
+
     return RosterSchema(
         id=roster.id,
         name=roster.name,
@@ -60,6 +73,8 @@ async def get_roster(
         team_id=roster.team_id,
         actions=actions,
         thread=thread_info,
+        city=city,
+        age=age,
     )
 
 
@@ -83,6 +98,18 @@ async def update_roster(
         user_id=request.user,
         team_id=roster.team_id,
     )
+
+    # Compute city from address
+    city = roster.address.city if roster.address else None
+
+    # Compute age from birthdate
+    age = None
+    if roster.birthdate:
+        from datetime import datetime
+
+        today = datetime.now(tz=UTC).date()
+        age = (today - roster.birthdate).days // 365
+
     return RosterSchema(
         id=roster.id,
         name=roster.name,
@@ -101,6 +128,8 @@ async def update_roster(
         updated_at=roster.updated_at,
         team_id=roster.team_id,
         actions=[],  # Update endpoints don't compute actions
+        city=city,
+        age=age,
     )
 
 

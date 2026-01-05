@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import joinedload
 
 from app.actions.enums import ActionGroupType
@@ -7,6 +9,7 @@ from app.objects.schemas import (
     EmailFieldValue,
     EnumFieldValue,
     FieldType,
+    IntFieldValue,
     ObjectColumn,
     StringFieldValue,
     media_to_image_field_value,
@@ -38,7 +41,7 @@ class RosterObject(BaseObject[Roster]):
     top_level_action_group = ActionGroupType.RosterActions
 
     # Load options
-    load_options = [joinedload(Roster.user), joinedload(Roster.profile_photo)]
+    load_options = [joinedload(Roster.user), joinedload(Roster.profile_photo), joinedload(Roster.address)]
 
     column_definitions = [
         ObjectColumn(
@@ -128,6 +131,32 @@ class RosterObject(BaseObject[Roster]):
             type=FieldType.String,
             value=lambda obj: StringFieldValue(value=obj.youtube_channel) if obj.youtube_channel else None,
             sortable=True,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=True,
+        ),
+        ObjectColumn(
+            key="city",
+            label="City",
+            type=FieldType.String,
+            value=lambda obj: StringFieldValue(value=obj.address.city) if obj.address else None,
+            sortable=False,
+            default_visible=True,
+            editable=False,
+            nullable=True,
+            include_in_list=True,
+        ),
+        ObjectColumn(
+            key="age",
+            label="Age",
+            type=FieldType.Int,
+            value=lambda obj: (
+                IntFieldValue(value=(datetime.now(tz=UTC).date() - obj.birthdate).days // 365)
+                if obj.birthdate
+                else None
+            ),
+            sortable=False,
             default_visible=True,
             editable=False,
             nullable=True,

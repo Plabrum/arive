@@ -1724,6 +1724,10 @@ export type RosterSchemaTeamId = number | null;
 
 export type RosterSchemaThread = ThreadUnreadInfo | null;
 
+export type RosterSchemaCity = string | null;
+
+export type RosterSchemaAge = number | null;
+
 export interface RosterSchema {
   /** SQID-encoded identifier */
   id: string;
@@ -1744,6 +1748,8 @@ export interface RosterSchema {
   team_id?: RosterSchemaTeamId;
   actions: ActionDTO[];
   thread?: RosterSchemaThread;
+  city?: RosterSchemaCity;
+  age?: RosterSchemaAge;
 }
 
 export type RosterUpdateSchemaEmail = string | null;
