@@ -123,7 +123,6 @@ export function UpdateRosterForm({
           name="birthdate"
           label="Birthday"
           placeholder="Select date"
-          showTime={false}
         />
 
         <FormCustom name="gender">
