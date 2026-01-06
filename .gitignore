@@ -172,3 +172,4 @@ migrate.sh
 
 # Local upload files
 backend/uploads
+.lazy.lua
