@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ObjectList, TopLevelActions } from '@/components/object-list';
 import { PageTopBar } from '@/components/page-topbar';
+import { Button } from '@/components/ui/button';
 import { ActionGroupType } from '@/openapi/ariveAPI.schemas';
 
 export function RosterPage() {
@@ -9,7 +10,21 @@ export function RosterPage() {
   return (
     <PageTopBar
       title="Roster"
-      actions={<TopLevelActions actionGroup={ActionGroupType.roster_actions} />}
+      actions={
+        <div className="flex items-center gap-2">
+          <TopLevelActions actionGroup={ActionGroupType.roster_actions} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // TODO: Implement invite roster member functionality
+              console.log('Invite roster member clicked');
+            }}
+          >
+            Invite Roster Member
+          </Button>
+        </div>
+      }
     >
       <ObjectList
         objectType="roster"
