@@ -11,8 +11,7 @@ export function RosterPage() {
     <PageTopBar
       title="Roster"
       actions={
-        <div className="flex items-center gap-2">
-          <TopLevelActions actionGroup={ActionGroupType.roster_actions} />
+        <TopLevelActions actionGroup={ActionGroupType.roster_actions}>
           <Button
             variant="outline"
             size="sm"
@@ -23,7 +22,7 @@ export function RosterPage() {
           >
             Invite Roster Member
           </Button>
-        </div>
+        </TopLevelActions>
       }
     >
       <ObjectList
