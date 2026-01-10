@@ -4,13 +4,15 @@ import type { ActionGroupType } from '@/openapi/ariveAPI.schemas';
 
 interface TopLevelActionsProps {
   actionGroup: ActionGroupType;
+  /** Optional extra buttons to render before the dropdown menu */
+  children?: React.ReactNode;
 }
 
 /**
  * Component that fetches and renders top-level actions for an action group.
  * Uses the list_actions endpoint to get available actions without object context.
  */
-export function TopLevelActions({ actionGroup }: TopLevelActionsProps) {
+export function TopLevelActions({ actionGroup, children }: TopLevelActionsProps) {
   // Fetch available top-level actions
   const { data } = useActionsActionGroupListActionsSuspense(actionGroup);
 
@@ -22,6 +24,8 @@ export function TopLevelActions({ actionGroup }: TopLevelActionsProps) {
       actions={data.actions}
       actionGroup={actionGroup}
       // onInvalidate is no longer needed - backend controls invalidation
-    />
+    >
+      {children}
+    </ObjectActions>
   );
 }

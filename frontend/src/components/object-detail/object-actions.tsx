@@ -19,6 +19,8 @@ type ObjectActionsProps = (ObjectActionData | TopLevelActionData) & {
     onOpen: () => void;
     onClose: () => void;
   };
+  /** Optional extra buttons to render before the dropdown menu */
+  children?: React.ReactNode;
 };
 
 export function ObjectActions(props: ObjectActionsProps) {
@@ -135,6 +137,9 @@ export function ObjectActions(props: ObjectActionsProps) {
             {getActionLabel(secondaryAction)}
           </Button>
         )}
+
+        {/* Extra buttons (children) rendered before dropdown menu */}
+        {props.children}
 
         {/* Dropdown menu - shows all actions on mobile, remaining actions on desktop */}
         <DropdownMenu>
