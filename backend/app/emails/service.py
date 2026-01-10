@@ -137,6 +137,34 @@ class EmailService:
             context=context,
         )
 
+    async def send_roster_invitation_email(
+        self,
+        to_email: str,
+        roster_name: str,
+        inviter_name: str,
+        invitation_link: str,
+        expires_hours: int = 72,
+    ) -> str:
+        """Send roster member portal invitation email.
+
+        NOTE: Template will be implemented in Phase 4.
+        For now, reusing team_invitation template as placeholder.
+        """
+        context = {
+            "invitee_email": to_email,
+            "team_name": f"{roster_name}'s Portal",  # Placeholder
+            "inviter_name": inviter_name,
+            "invitation_url": invitation_link,
+            "expiration_hours": expires_hours,
+        }
+
+        return await self.send_email(
+            to=to_email,
+            subject="You're invited to your campaign portal on Arive",
+            template_name="team_invitation",  # Placeholder - will be "roster_invitation" in Phase 4
+            context=context,
+        )
+
 
 async def prepare_email_for_queue(
     session: AsyncSession,

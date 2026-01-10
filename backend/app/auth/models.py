@@ -10,6 +10,7 @@ from app.base.models import BaseDBModel
 from app.utils.sqids import Sqid
 
 if TYPE_CHECKING:
+    from app.roster.models import Roster
     from app.teams.models import Team
     from app.users.models import User
 
@@ -75,13 +76,22 @@ class TeamInvitationToken(BaseDBModel):
 
     __tablename__ = "team_invitation_tokens"
     __table_args__ = (
-        # Prevent duplicate pending invitations for same email+team
+        # Prevent duplicate pending regular team invitations
         sa.Index(
             "ix_team_invitation_pending",
             "team_id",
             "invited_email",
             unique=True,
-            postgresql_where=sa.text("accepted_at IS NULL"),
+            postgresql_where=sa.text("accepted_at IS NULL AND roster_id IS NULL"),
+        ),
+        # Prevent duplicate pending roster invitations
+        sa.Index(
+            "ix_roster_invitation_pending",
+            "team_id",
+            "roster_id",
+            "invited_email",
+            unique=True,
+            postgresql_where=sa.text("accepted_at IS NULL AND roster_id IS NOT NULL"),
         ),
     )
 
@@ -105,9 +115,24 @@ class TeamInvitationToken(BaseDBModel):
     accepted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True, default=None)
     """When this invitation was accepted (null if not accepted yet)"""
 
+    # Optional fields for roster member invitations
+    roster_id: Mapped[Sqid | None] = mapped_column(
+        sa.ForeignKey("roster.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    """If this is a roster member invitation, the roster record being invited"""
+
+    invited_role_level: Mapped[str | None] = mapped_column(
+        sa.Text,
+        nullable=True,
+    )
+    """The role level to assign (e.g., 'MEMBER', 'ROSTER_MEMBER'). Defaults to MEMBER if null."""
+
     # Relationships
     team: Mapped["Team"] = relationship("Team", back_populates="invitation_tokens")
     invited_by: Mapped["User"] = relationship("User", foreign_keys=[invited_by_user_id])
+    roster: Mapped["Roster | None"] = relationship("Roster")
 
     @classmethod
     def create_invitation(
@@ -117,6 +142,8 @@ class TeamInvitationToken(BaseDBModel):
         invited_by_user_id: int,
         token_hash: str,
         expires_in_hours: int = 72,
+        roster_id: int | None = None,
+        invited_role_level: str | None = None,
     ) -> "TeamInvitationToken":
         """Create a new team invitation token.
 
@@ -126,6 +153,8 @@ class TeamInvitationToken(BaseDBModel):
             invited_by_user_id: ID of the user sending the invitation
             token_hash: SHA-256 hash of the token
             expires_in_hours: Hours until expiration (default: 72)
+            roster_id: If roster member invitation, the roster record ID
+            invited_role_level: Role to assign (defaults to MEMBER if None)
 
         Returns:
             New TeamInvitationToken instance
@@ -136,6 +165,8 @@ class TeamInvitationToken(BaseDBModel):
             invited_by_user_id=invited_by_user_id,
             token_hash=token_hash,
             expires_at=datetime.now(tz=UTC) + timedelta(hours=expires_in_hours),
+            roster_id=roster_id,
+            invited_role_level=invited_role_level,
         )
 
     def is_valid(self) -> bool:

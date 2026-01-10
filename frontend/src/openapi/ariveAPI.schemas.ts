@@ -1648,6 +1648,7 @@ export const RoleLevel = {
   admin: 'admin',
   member: 'member',
   viewer: 'viewer',
+  roster_member: 'roster_member',
 } as const;
 
 export type RosterCreateSchemaEmail = string | null;

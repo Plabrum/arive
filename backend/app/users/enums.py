@@ -14,6 +14,7 @@ class RoleLevel(StrEnum):
     ADMIN = auto()
     MEMBER = auto()
     VIEWER = auto()
+    ROSTER_MEMBER = auto()  # Limited access for talent
 
 
 class UserActions(StrEnum):

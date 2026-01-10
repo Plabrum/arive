@@ -66,3 +66,12 @@ class RosterCreateSchema(BaseSchema):
     tiktok_handle: str | None = None
     youtube_channel: str | None = None
     profile_photo_id: Sqid | None = None
+
+
+class InviteRosterMemberSchema(BaseSchema):
+    """Schema for inviting a roster member to the portal.
+
+    Email is taken from Roster.email field, so no input needed.
+    """
+
+    pass
