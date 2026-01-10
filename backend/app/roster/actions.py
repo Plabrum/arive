@@ -22,6 +22,7 @@ from app.utils.db import update_model
 # Create roster action group
 roster_actions = action_group_factory(
     ActionGroupType.RosterActions,
+    default_invalidation="/o/roster",
     model_type=Roster,
     load_options=[joinedload(Roster.address)],
 )
