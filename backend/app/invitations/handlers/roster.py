@@ -22,6 +22,36 @@ class RosterInvitationHandler:
         return RoleLevel.ROSTER_MEMBER.value
 
     @staticmethod
+    async def get_user_name(
+        session: AsyncSession,
+        invited_email: str,
+        invitation_context: dict,
+    ) -> str | None:
+        """Get roster name for the new user account.
+
+        Args:
+            session: Database session
+            invited_email: The email address of the invitee
+            invitation_context: Must contain 'roster_id'
+
+        Returns:
+            Roster name, or None if roster not found (falls back to email prefix)
+        """
+        from app.roster.models import Roster
+
+        roster_id = invitation_context.get("roster_id")
+        if not roster_id:
+            logger.warning(f"Roster invitation missing roster_id in context: {invitation_context}")
+            return None
+
+        roster = await session.get(Roster, roster_id)
+        if roster:
+            return roster.name
+        else:
+            logger.warning(f"Roster {roster_id} not found, using email prefix for user name")
+            return None
+
+    @staticmethod
     async def post_accept_hook(
         session: AsyncSession,
         user_id: int,

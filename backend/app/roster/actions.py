@@ -186,7 +186,8 @@ class InviteRosterMember(BaseObjectAction[Roster, InviteRosterMemberSchema]):
 
         # Check for pending roster invitation
         pending_invitation_stmt = select(TeamInvitationToken).where(
-            TeamInvitationToken.roster_id == obj.id,
+            TeamInvitationToken.invitation_type == "roster_member",
+            TeamInvitationToken.invitation_context["roster_id"].as_integer() == int(obj.id),
             TeamInvitationToken.accepted_at.is_(None),
         )
         pending_invitation_result = await transaction.execute(pending_invitation_stmt)

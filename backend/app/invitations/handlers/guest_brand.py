@@ -24,6 +24,26 @@ class GuestBrandInvitationHandler:
         return RoleLevel.GUEST_BRAND.value
 
     @staticmethod
+    async def get_user_name(
+        session: AsyncSession,
+        invited_email: str,
+        invitation_context: dict,
+    ) -> str | None:
+        """Get brand name for the new user account.
+
+        TODO: Implement when Brand model exists
+
+        Args:
+            session: Database session
+            invited_email: The email address of the invitee
+            invitation_context: Must contain 'brand_id'
+
+        Returns:
+            None to use email prefix (not yet implemented)
+        """
+        return None  # TODO: Fetch from Brand model
+
+    @staticmethod
     async def post_accept_hook(
         session: AsyncSession,
         user_id: int,

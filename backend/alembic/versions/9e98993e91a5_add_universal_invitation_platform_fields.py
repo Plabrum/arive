@@ -13,7 +13,9 @@ from alembic_utils.pg_grant_table import PGGrantTable
 from sqlalchemy import text as sql_text
 
 from alembic import op
-from app.state_machine.models import TextEnum
+from app.campaigns.enums import CampaignGuestAccessLevel
+from app.users.enums import RoleLevel
+from app.utils.textenum import TextEnum
 
 # revision identifiers, used by Alembic.
 revision: str = "9e98993e91a5"
@@ -29,11 +31,15 @@ def upgrade() -> None:
         "campaign_guests",
         "access_level",
         existing_type=sa.VARCHAR(length=50),
-        type_=TextEnum(),
+        type_=TextEnum(CampaignGuestAccessLevel),
         existing_nullable=False,
     )
     op.alter_column(
-        "roles", "role_level", existing_type=sa.VARCHAR(length=50), type_=TextEnum(), existing_nullable=False
+        "roles",
+        "role_level",
+        existing_type=sa.VARCHAR(length=50),
+        type_=TextEnum(RoleLevel),
+        existing_nullable=False,
     )
     op.add_column(
         "team_invitation_tokens", sa.Column("invitation_type", sa.Text(), server_default="team_member", nullable=False)
@@ -133,12 +139,16 @@ def downgrade() -> None:
     op.drop_column("team_invitation_tokens", "invitation_context")
     op.drop_column("team_invitation_tokens", "invitation_type")
     op.alter_column(
-        "roles", "role_level", existing_type=TextEnum(), type_=sa.VARCHAR(length=50), existing_nullable=False
+        "roles",
+        "role_level",
+        existing_type=TextEnum(RoleLevel),
+        type_=sa.VARCHAR(length=50),
+        existing_nullable=False,
     )
     op.alter_column(
         "campaign_guests",
         "access_level",
-        existing_type=TextEnum(),
+        existing_type=TextEnum(CampaignGuestAccessLevel),
         type_=sa.VARCHAR(length=50),
         existing_nullable=False,
     )

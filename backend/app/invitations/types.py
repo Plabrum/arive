@@ -46,6 +46,27 @@ class InvitationHandler(Protocol):
         ...
 
     @staticmethod
+    async def get_user_name(
+        session: AsyncSession,
+        invited_email: str,
+        invitation_context: dict,
+    ) -> str | None:
+        """Get the name for the new user account (optional).
+
+        Returns the name to use when creating a new user account.
+        If None is returned, defaults to email prefix.
+
+        Args:
+            session: Database session
+            invited_email: The email address of the invitee
+            invitation_context: Type-specific context
+
+        Returns:
+            Name to use for new user, or None to use email prefix default
+        """
+        ...
+
+    @staticmethod
     async def post_accept_hook(
         session: AsyncSession,
         user_id: int,

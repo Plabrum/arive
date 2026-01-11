@@ -1,5 +1,7 @@
 """Team utility functions."""
 
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -72,17 +74,16 @@ async def generate_scoped_team_link(
 async def verify_team_invitation_token(
     db_session: AsyncSession,
     token: str,
-) -> dict[str, int | str | None] | None:
-    """
-    Verify and decode a team invitation token.
+) -> dict[str, Any] | None:
+    """Verify and decode a team invitation token.
 
     Args:
         db_session: Database session
         token: The invitation token to verify
 
     Returns:
-        Dict containing 'team_id', 'invited_email', and 'invited_by_user_id' if valid,
-        None if invalid or expired
+        Dict containing team_id, invited_email, invited_by_user_id, invitation_type,
+        and invitation_context if valid; None if invalid or expired
 
     Note:
         This does NOT mark the token as accepted. That should be done separately
@@ -110,6 +111,6 @@ async def verify_team_invitation_token(
         "team_id": invitation_token.team_id,
         "invited_email": invitation_token.invited_email,
         "invited_by_user_id": invitation_token.invited_by_user_id,
-        "roster_id": invitation_token.roster_id,  # Will be None for regular team invitations
-        "invited_role_level": invitation_token.invited_role_level,  # Will be None for regular invitations
+        "invitation_type": invitation_token.invitation_type,
+        "invitation_context": invitation_token.invitation_context,
     }

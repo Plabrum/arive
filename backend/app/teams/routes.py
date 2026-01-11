@@ -215,15 +215,10 @@ async def accept_team_invitation(
     team_id: int = int(invitation_data["team_id"])  # type: ignore[arg-type]
     invited_email: str = str(invitation_data["invited_email"])
 
-    # Get invitation type and context (new universal format)
+    # Get invitation type and context from universal format
     invitation_type_str = invitation_data.get("invitation_type", "team_member")
     raw_context = invitation_data.get("invitation_context", {})
     invitation_context: dict = raw_context if isinstance(raw_context, dict) else {}
-
-    # Backward compatibility: Handle old roster invitations
-    if "roster_id" in invitation_data and invitation_data["roster_id"] is not None:
-        invitation_type_str = "roster_member"
-        invitation_context = {"roster_id": invitation_data["roster_id"]}
 
     try:
         invitation_type = InvitationType(invitation_type_str)
@@ -243,9 +238,14 @@ async def accept_team_invitation(
 
     if not user:
         # Create new user
+        # Get user name from handler (e.g., roster name), or use email prefix as fallback
+        user_name = await handler.get_user_name(transaction, invited_email, invitation_context)
+        if not user_name:
+            user_name = str(invited_email).split("@")[0]  # Fallback to email prefix
+
         user = User(
             email=invited_email,
-            name=str(invited_email).split("@")[0],  # Use email prefix as default name
+            name=user_name,
             email_verified=True,  # User proved they have access to the email by clicking the link
         )
         transaction.add(user)

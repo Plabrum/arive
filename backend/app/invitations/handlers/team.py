@@ -22,6 +22,24 @@ class TeamMemberInvitationHandler:
         return RoleLevel.MEMBER.value
 
     @staticmethod
+    async def get_user_name(
+        session: AsyncSession,
+        invited_email: str,
+        invitation_context: dict,
+    ) -> str | None:
+        """Use default email prefix for team member names.
+
+        Args:
+            session: Database session
+            invited_email: The email address of the invitee
+            invitation_context: Not used for team members
+
+        Returns:
+            None to use email prefix default
+        """
+        return None  # Use email prefix
+
+    @staticmethod
     async def post_accept_hook(
         session: AsyncSession,
         user_id: int,
