@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import TeamInvitationToken
+from app.invitations import InvitationType, generate_invitation_link
 from app.roster.utils import generate_roster_invitation_link
 from app.teams.utils import verify_team_invitation_token
 from app.users.enums import RoleLevel
@@ -201,13 +202,14 @@ class TestRosterInvitations:
     ):
         """Test generating a roster invitation link creates a valid token."""
 
-        # Generate invitation link
-        invitation_link = await generate_roster_invitation_link(
+        # Generate invitation link using universal service
+        invitation_link = await generate_invitation_link(
             db_session=db_session,
-            roster_id=int(roster.id),
             team_id=int(team.id),
             invited_email="talent@example.com",
             invited_by_user_id=int(user.id),
+            invitation_type=InvitationType.ROSTER_MEMBER,
+            invitation_context={"roster_id": int(roster.id)},
             expires_in_hours=72,
         )
 
@@ -228,10 +230,10 @@ class TestRosterInvitations:
         invitation = result.scalar_one_or_none()
 
         assert invitation is not None
-        assert invitation.roster_id == roster.id
+        assert invitation.invitation_type == "roster_member"
+        assert invitation.invitation_context == {"roster_id": roster.id}
         assert invitation.team_id == team.id
         assert invitation.invited_email == "talent@example.com"
-        assert invitation.invited_role_level == RoleLevel.ROSTER_MEMBER
         assert invitation.invited_by_user_id == user.id
 
     async def test_verify_roster_invitation_token_valid(
@@ -243,13 +245,14 @@ class TestRosterInvitations:
     ):
         """Test verifying a valid roster invitation token."""
 
-        # Generate invitation link
-        invitation_link = await generate_roster_invitation_link(
+        # Generate invitation link using universal service
+        invitation_link = await generate_invitation_link(
             db_session=db_session,
-            roster_id=int(roster.id),
             team_id=int(team.id),
             invited_email="talent@example.com",
             invited_by_user_id=int(user.id),
+            invitation_type=InvitationType.ROSTER_MEMBER,
+            invitation_context={"roster_id": int(roster.id)},
             expires_in_hours=72,
         )
         await db_session.commit()
@@ -261,10 +264,10 @@ class TestRosterInvitations:
         invitation_data = await verify_team_invitation_token(db_session, token)
 
         assert invitation_data is not None
-        assert invitation_data["roster_id"] == roster.id
+        assert invitation_data["invitation_type"] == "roster_member"
+        assert invitation_data["invitation_context"] == {"roster_id": roster.id}
         assert invitation_data["team_id"] == team.id
         assert invitation_data["invited_email"] == "talent@example.com"
-        assert invitation_data["invited_role_level"] == RoleLevel.ROSTER_MEMBER
 
     async def test_verify_roster_invitation_token_invalid(
         self,

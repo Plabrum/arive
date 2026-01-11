@@ -115,19 +115,37 @@ class TeamInvitationToken(BaseDBModel):
     accepted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True, default=None)
     """When this invitation was accepted (null if not accepted yet)"""
 
-    # Optional fields for roster member invitations
+    # Universal invitation platform fields
+    invitation_type: Mapped[str] = mapped_column(
+        sa.Text,
+        nullable=False,
+        default="team_member",
+        server_default="team_member",
+    )
+    """Type of invitation (team_member, roster_member, guest_brand, etc.)"""
+
+    invitation_context: Mapped[dict] = mapped_column(
+        sa.JSON,
+        nullable=False,
+        default=dict,
+        server_default=sa.text("'{}'::json"),
+    )
+    """Type-specific context (e.g., {'roster_id': 123} or {'brand_id': 456})"""
+
+    # DEPRECATED: Legacy fields for backward compatibility
+    # TODO: Remove after data migration and deploy
     roster_id: Mapped[Sqid | None] = mapped_column(
         sa.ForeignKey("roster.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
-    """If this is a roster member invitation, the roster record being invited"""
+    """DEPRECATED: Use invitation_context instead. Legacy roster member invitation field."""
 
     invited_role_level: Mapped[str | None] = mapped_column(
         sa.Text,
         nullable=True,
     )
-    """The role level to assign (e.g., 'MEMBER', 'ROSTER_MEMBER'). Defaults to MEMBER if null."""
+    """DEPRECATED: Use invitation_type to determine role. Legacy role level field."""
 
     # Relationships
     team: Mapped["Team"] = relationship("Team", back_populates="invitation_tokens")

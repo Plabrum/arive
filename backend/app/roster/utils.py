@@ -1,9 +1,22 @@
-"""Utility functions for roster member invitations."""
+"""DEPRECATED: Utility functions for roster member invitations.
+
+This module is deprecated in favor of the universal invitation system.
+Use app.invitations.generate_invitation_link() instead.
+
+Old:
+    from app.roster.utils import generate_roster_invitation_link
+    link = await generate_roster_invitation_link(...)
+
+New:
+    from app.invitations import InvitationType, generate_invitation_link
+    link = await generate_invitation_link(
+        invitation_type=InvitationType.ROSTER_MEMBER,
+        invitation_context={"roster_id": roster_id},
+        ...
+    )
+"""
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.users.enums import RoleLevel
-from app.utils.configure import config
 
 
 async def generate_roster_invitation_link(
@@ -14,29 +27,28 @@ async def generate_roster_invitation_link(
     invited_by_user_id: int,
     expires_in_hours: int = 72,
 ) -> str:
-    """Generate secure roster invitation link with token."""
-    from app.auth.crypto import generate_secure_token, hash_token
-    from app.auth.models import TeamInvitationToken
+    """DEPRECATED: Use app.invitations.generate_invitation_link() instead.
 
-    plaintext_token = generate_secure_token()
-    token_hash = hash_token(plaintext_token)
+    This function is kept for backward compatibility but will be removed in a future version.
+    """
+    import warnings
 
-    invitation = TeamInvitationToken.create_invitation(
-        team_id=team_id,
-        invited_email=invited_email.lower(),
-        invited_by_user_id=invited_by_user_id,
-        token_hash=token_hash,
-        expires_in_hours=expires_in_hours,
-        roster_id=roster_id,  # NEW: Mark as roster invitation
-        invited_role_level=RoleLevel.ROSTER_MEMBER,  # NEW: Assign roster role
+    from app.invitations import InvitationType, generate_invitation_link
+
+    warnings.warn(
+        "generate_roster_invitation_link() is deprecated. "
+        "Use app.invitations.generate_invitation_link() with InvitationType.ROSTER_MEMBER instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
 
-    db_session.add(invitation)
-    await db_session.flush()
-
-    # Use frontend origin to match team invitation pattern
-    # Frontend will handle the redirect to backend /teams/invitations/accept
-    base_url = config.FRONTEND_ORIGIN.rstrip("/")
-    invitation_url = f"{base_url}/invite/accept?token={plaintext_token}"
-
-    return invitation_url
+    # Delegate to new universal service
+    return await generate_invitation_link(
+        db_session=db_session,
+        team_id=team_id,
+        invited_email=invited_email,
+        invited_by_user_id=invited_by_user_id,
+        invitation_type=InvitationType.ROSTER_MEMBER,
+        invitation_context={"roster_id": roster_id},
+        expires_in_hours=expires_in_hours,
+    )

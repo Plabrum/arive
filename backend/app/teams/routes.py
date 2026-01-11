@@ -173,7 +173,15 @@ async def accept_team_invitation(
     transaction: AsyncSession,
     token: str,
 ) -> Response:
-    """Accept a team invitation and create/link user to team.
+    """Accept any type of invitation using strategy pattern - NO BRANCHING!
+
+    This universal handler works for all invitation types:
+    - Team member invitations
+    - Roster member invitations
+    - Guest brand invitations (future)
+    - Agency partner invitations (future)
+
+    Each type's specific logic is handled by its registered handler.
 
     Args:
         request: Litestar request object
@@ -186,6 +194,8 @@ async def accept_team_invitation(
     Raises:
         HTTPException: If token is invalid or expired
     """
+    from app.invitations import InvitationType, get_handler
+
     if not token:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
@@ -201,12 +211,32 @@ async def accept_team_invitation(
             detail="Invalid or expired invitation. Please request a new invitation.",
         )
 
+    # Extract universal fields
     team_id: int = int(invitation_data["team_id"])  # type: ignore[arg-type]
     invited_email: str = str(invitation_data["invited_email"])
-    roster_id = invitation_data.get("roster_id")  # None for regular team invitations
-    invited_role_level = invitation_data.get("invited_role_level")  # None for regular invitations
 
-    # Check if user exists for this email
+    # Get invitation type and context (new universal format)
+    invitation_type_str = invitation_data.get("invitation_type", "team_member")
+    raw_context = invitation_data.get("invitation_context", {})
+    invitation_context: dict = raw_context if isinstance(raw_context, dict) else {}
+
+    # Backward compatibility: Handle old roster invitations
+    if "roster_id" in invitation_data and invitation_data["roster_id"] is not None:
+        invitation_type_str = "roster_member"
+        invitation_context = {"roster_id": invitation_data["roster_id"]}
+
+    try:
+        invitation_type = InvitationType(invitation_type_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f"Unknown invitation type: {invitation_type_str}",
+        )
+
+    # Get handler for this invitation type
+    handler = get_handler(invitation_type)
+
+    # Create or get user (same for all types)
     user_stmt = select(User).where(User.email == invited_email)
     user_result = await transaction.execute(user_stmt)
     user = user_result.scalar_one_or_none()
@@ -220,12 +250,15 @@ async def accept_team_invitation(
         )
         transaction.add(user)
         await transaction.flush()  # Flush to get user.id
-        logger.info(f"Created new user {user.id} from team invitation (email={invited_email})")
+        logger.info(f"Created new user {user.id} from {invitation_type.value} invitation (email={invited_email})")
     else:
         # Mark email as verified (user proved they have access to the email)
         if not user.email_verified:
             user.email_verified = True
-            logger.info(f"Marked user {user.id} email as verified via team invitation")
+            logger.info(f"Marked user {user.id} email as verified via {invitation_type.value} invitation")
+
+    # Determine role level from handler (NO BRANCHING!)
+    role_level = RoleLevel(handler.get_role_level())
 
     # Check if user is already in this team
     role_check_stmt = select(Role).where(
@@ -234,9 +267,6 @@ async def accept_team_invitation(
     )
     role_check_result = await transaction.execute(role_check_stmt)
     existing_role = role_check_result.scalar_one_or_none()
-
-    # Determine role level (use invited_role_level if present, otherwise default to MEMBER)
-    role_level: RoleLevel = RoleLevel(invited_role_level) if invited_role_level else RoleLevel.MEMBER
 
     if existing_role:
         # Update existing role to match invitation (in case role level changed)
@@ -257,19 +287,13 @@ async def accept_team_invitation(
         user.state = UserStates.ACTIVE
         logger.info(f"Updated user {user.id} state to ACTIVE")
 
-    # If this is a roster invitation, link the user to the roster record
-    if roster_id:
-        from app.roster.models import Roster
-
-        roster_stmt = select(Roster).where(Roster.id == roster_id)
-        roster_result = await transaction.execute(roster_stmt)
-        roster = roster_result.scalar_one_or_none()
-
-        if roster:
-            roster.roster_user_id = user.id
-            logger.info(f"Linked roster {roster_id} to user {user.id}")
-        else:
-            logger.warning(f"Roster {roster_id} not found for invitation, skipping roster link")
+    # Execute type-specific post-accept logic (NO BRANCHING!)
+    await handler.post_accept_hook(
+        session=transaction,
+        user_id=user.id,
+        team_id=team_id,
+        invitation_context=invitation_context,
+    )
 
     # Mark invitation as accepted (with lock to prevent race conditions)
     from app.auth.crypto import hash_token as hash_token_func
@@ -296,7 +320,9 @@ async def accept_team_invitation(
     # Redirect to frontend success page
     frontend_url = config.SUCCESS_REDIRECT_URL
 
-    logger.info(f"User {user.id} accepted team {team_id} invitation, redirecting to {frontend_url}")
+    logger.info(
+        f"User {user.id} accepted {invitation_type.value} invitation for team {team_id}, redirecting to {frontend_url}"
+    )
     return Response(
         content="",
         status_code=HTTP_302_FOUND,

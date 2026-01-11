@@ -174,7 +174,6 @@ class InviteRosterMember(BaseObjectAction[Roster, InviteRosterMemberSchema]):
         from sqlalchemy import select
 
         from app.auth.models import TeamInvitationToken
-        from app.roster.utils import generate_roster_invitation_link
         from app.users.models import User
 
         if not obj.email:
@@ -199,13 +198,16 @@ class InviteRosterMember(BaseObjectAction[Roster, InviteRosterMemberSchema]):
                 detail=f"An invitation is already pending for {invited_email}",
             )
 
-        # Generate invitation link
-        invitation_link = await generate_roster_invitation_link(
+        # Generate invitation link using universal service
+        from app.invitations import InvitationType, generate_invitation_link
+
+        invitation_link = await generate_invitation_link(
             db_session=transaction,
-            roster_id=int(obj.id),
             team_id=int(obj.team_id),
             invited_email=invited_email,
             invited_by_user_id=int(deps.user),
+            invitation_type=InvitationType.ROSTER_MEMBER,
+            invitation_context={"roster_id": int(obj.id)},
             expires_in_hours=72,
         )
 
