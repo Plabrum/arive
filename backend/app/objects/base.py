@@ -150,15 +150,27 @@ class BaseObject[O: BaseDBModel](ABC):
         return or_(*conditions) if conditions else None
 
     @classmethod
-    async def query_from_request(cls, session: AsyncSession, request: ObjectListRequest):
+    async def query_from_request(
+        cls, session: AsyncSession, request: ObjectListRequest, http_request: "Any | None" = None
+    ):
         """Build query from request filters, sorts, and search.
 
         Scope and soft-delete filtering are applied automatically via SQLAlchemy events.
+        Campaign-scoped filtering is applied if the user has limited campaign access.
         """
         query = select(cls.model())
 
         # Apply load options (eager loading, etc.)
         query = query.options(*cls.load_options)
+
+        # Apply campaign-scoped filtering if applicable
+        if http_request is not None:
+            from app.utils.campaign_access import apply_campaign_scoped_filter
+
+            user_id = http_request.user
+            team_id = http_request.session.get("team_id")
+            if user_id and team_id:
+                query = await apply_campaign_scoped_filter(query, session, user_id, team_id, cls.model())
 
         # Apply search filter if provided
         search_filter = cls.create_search_filter(request.search)
@@ -189,12 +201,15 @@ class BaseObject[O: BaseDBModel](ABC):
         return obj
 
     @classmethod
-    async def get_list(cls, session: AsyncSession, request: ObjectListRequest) -> tuple[Sequence[BaseDBModel], int]:
+    async def get_list(
+        cls, session: AsyncSession, request: ObjectListRequest, http_request: "Any | None" = None
+    ) -> tuple[Sequence[BaseDBModel], int]:
         """Get list of objects with filtering and pagination.
 
         Scope and soft-delete filtering are applied automatically via SQLAlchemy events.
+        Campaign-scoped filtering is applied if the user has limited campaign access.
         """
-        query = await cls.query_from_request(session, request)
+        query = await cls.query_from_request(session, request, http_request)
         total_rows = await session.execute(select(func.count()).select_from(query.subquery()))
         total = total_rows.scalar_one()
 

@@ -145,14 +145,9 @@ class EmailService:
         invitation_link: str,
         expires_hours: int = 72,
     ) -> str:
-        """Send roster member portal invitation email.
-
-        NOTE: Template will be implemented in Phase 4.
-        For now, reusing team_invitation template as placeholder.
-        """
+        """Send roster member portal invitation email."""
         context = {
-            "invitee_email": to_email,
-            "team_name": f"{roster_name}'s Portal",  # Placeholder
+            "roster_name": roster_name,
             "inviter_name": inviter_name,
             "invitation_url": invitation_link,
             "expiration_hours": expires_hours,
@@ -161,7 +156,7 @@ class EmailService:
         return await self.send_email(
             to=to_email,
             subject="You're invited to your campaign portal on Arive",
-            template_name="team_invitation",  # Placeholder - will be "roster_invitation" in Phase 4
+            template_name="roster_invitation_email",
             context=context,
         )
 

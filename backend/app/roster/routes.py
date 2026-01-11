@@ -1,7 +1,8 @@
 import logging
 from datetime import UTC
 
-from litestar import Request, Router, get, post
+from litestar import Request, Response, Router, get, post
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.actions.enums import ActionGroupType
@@ -171,12 +172,130 @@ async def update_roster(
     )
 
 
+@get("/invitations/accept", guards=[])
+async def accept_roster_invitation(
+    request: Request,
+    transaction: AsyncSession,
+    token: str,
+) -> Response:
+    """Accept a roster member invitation and create/link user account."""
+    from litestar.exceptions import HTTPException
+    from litestar.status_codes import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
+
+    from app.auth.crypto import hash_token
+    from app.auth.enums import ScopeType
+    from app.auth.models import TeamInvitationToken
+    from app.roster.models import Roster
+    from app.roster.utils import verify_roster_invitation_token
+    from app.users.enums import RoleLevel, UserStates
+    from app.users.models import Role, User
+    from app.utils.configure import config
+
+    if not token:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="Missing token parameter",
+        )
+
+    invitation_data = await verify_roster_invitation_token(transaction, token)
+
+    if not invitation_data:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired invitation. Please request a new invitation.",
+        )
+
+    roster_id = invitation_data["roster_id"]
+    team_id = invitation_data["team_id"]
+    invited_email = invitation_data["invited_email"]
+
+    # Get the roster record
+    roster = await get_or_404(transaction, Roster, roster_id)
+
+    # Check if user exists for this email
+    user_stmt = select(User).where(User.email == invited_email)
+    user_result = await transaction.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        user = User(
+            email=invited_email,
+            name=roster.name,
+            email_verified=True,
+        )
+        transaction.add(user)
+        await transaction.flush()
+        logger.info(f"Created new user {user.id} for roster member {roster_id}")
+    else:
+        if not user.email_verified:
+            user.email_verified = True
+            logger.info(f"Marked user {user.id} email as verified")
+
+    # Link user to roster record
+    roster.roster_user_id = user.id
+
+    # Get the role level from invitation (defaults to ROSTER_MEMBER)
+    invited_role_level = invitation_data.get("invited_role_level", RoleLevel.ROSTER_MEMBER)
+
+    # Check if user already has a role in this team
+    role_check_stmt = select(Role).where(
+        Role.user_id == user.id,
+        Role.team_id == team_id,
+    )
+    role_check_result = await transaction.execute(role_check_stmt)
+    existing_role = role_check_result.scalar_one_or_none()
+
+    if existing_role:
+        existing_role.role_level = invited_role_level
+        logger.info(f"Updated user {user.id} role to {invited_role_level} in team {team_id}")
+    else:
+        role = Role(
+            user_id=user.id,
+            team_id=team_id,
+            role_level=invited_role_level,
+        )
+        transaction.add(role)
+        logger.info(f"Added user {user.id} to team {team_id} as {invited_role_level}")
+
+    if user.state == UserStates.NEEDS_TEAM:
+        user.state = UserStates.ACTIVE
+        logger.info(f"Updated user {user.id} state to ACTIVE")
+
+    # Mark invitation as accepted
+    token_hash = hash_token(token)
+    invitation_stmt = select(TeamInvitationToken).where(TeamInvitationToken.token_hash == token_hash).with_for_update()
+    invitation_result = await transaction.execute(invitation_stmt)
+    invitation_token = invitation_result.scalar_one_or_none()
+
+    if invitation_token:
+        invitation_token.mark_as_accepted()
+        logger.info(f"Marked roster invitation as accepted for user {user.id}")
+
+    # Create secure session with TEAM scope
+    request.session["user_id"] = int(user.id)
+    request.session["authenticated"] = True
+    request.session["scope_type"] = ScopeType.TEAM.value
+    request.session["team_id"] = int(team_id)
+
+    frontend_url = config.SUCCESS_REDIRECT_URL
+    logger.info(f"User {user.id} accepted roster invitation, redirecting to {frontend_url}")
+
+    from litestar import Response
+
+    return Response(
+        content="",
+        status_code=HTTP_302_FOUND,
+        headers={"Location": frontend_url},
+    )
+
+
 roster_router = Router(
     path="/roster",
     guards=[requires_session],
     route_handlers=[
         get_roster,
         update_roster,
+        accept_roster_invitation,
     ],
     tags=["roster"],
 )
