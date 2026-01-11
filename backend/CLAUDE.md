@@ -303,58 +303,28 @@ class Campaign(TeamScopedBase, ThreadableMixin):
 
 ### 7. Roster Member Invitation System
 
-Roster members (talent/influencers) can receive their own user login with limited team access.
+Roster members (talent/influencers) can be invited to access their own campaigns via a limited-access portal.
 
 **Key Components:**
 - `Roster.roster_user_id` - Links roster record to user account
-- `RoleLevel.ROSTER_MEMBER` - Special role for limited access
-- `TeamInvitationToken.roster_id` - Reuses existing invitation infrastructure
-- Application-layer filtering in list endpoints
+- `RoleLevel.ROSTER_MEMBER` - Role with campaign-scoped access
+- `TeamInvitationToken.roster_id` - Reuses team invitation infrastructure
+- `app.utils.campaign_access` - Policy-based campaign filtering system
 
 **Invitation Flow:**
-```python
-from app.roster.utils import generate_roster_invitation_link
+1. Execute `InviteRosterMember` action on roster record (requires email)
+2. Generates token via `generate_roster_invitation_link()` in `app/roster/utils.py`
+3. Email sent with invitation link (frontend `/invite/accept?token=...`)
+4. User accepts → account created → linked to roster → assigned ROSTER_MEMBER role
+5. User logs in and sees only campaigns where `assigned_roster_id = roster.id`
 
-# Generate invitation
-invitation_link = await generate_roster_invitation_link(
-    db_session=session,
-    roster_id=int(roster.id),
-    team_id=int(team.id),
-    invited_email="talent@example.com",
-    invited_by_user_id=int(user.id),
-    expires_in_hours=72,
-)
+**Campaign Access Filtering:**
+Campaign access uses a policy-based system in `app/utils/campaign_access.py`:
+- **Roster members**: See only campaigns assigned to them
+- **Guest brands** (future): See campaigns they're added to
+- **Team members**: See all campaigns (via RLS)
 
-# Email sent automatically via InviteRosterMember action
-# User clicks link → account created → linked to roster → assigned ROSTER_MEMBER role
-```
-
-**Data Filtering Pattern:**
-```python
-from app.utils.roster_filters import get_roster_for_user, apply_roster_member_campaign_filter
-
-# In list endpoints
-async def list_campaigns(request: Request, transaction: AsyncSession, team_id: int):
-    query = select(Campaign).where(Campaign.team_id == team_id)
-
-    # Apply roster member filtering if applicable
-    roster = await get_roster_for_user(transaction, request.user, team_id)
-    if roster:
-        query = apply_roster_member_campaign_filter(query, roster.id)
-
-    result = await transaction.execute(query)
-    return result.scalars().all()
-```
-
-**Key Design Decisions:**
-- **Reuse TeamInvitationToken**: Added optional `roster_id` and `invited_role_level` fields instead of creating separate model
-- **Application-layer filtering**: Roster members log in with team scope but see filtered data based on campaign assignments
-- **Explicit linking**: `roster_user_id` provides clear relationship (not inferred from email matching)
-
-**Files to modify when adding roster filtering:**
-- `app/campaigns/routes.py` - Campaign list endpoints
-- `app/media/routes/media.py` - Media list endpoints
-- `app/deliverables/routes.py` - Deliverable list endpoints
+Filtering is applied automatically in `BaseObject.get_list()` for all object types.
 
 ## Testing
 

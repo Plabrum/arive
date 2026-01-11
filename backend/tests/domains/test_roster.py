@@ -213,7 +213,7 @@ class TestRosterInvitations:
 
         # Verify link format
         assert invitation_link.startswith("http")
-        assert "/roster/invitations/accept?token=" in invitation_link
+        assert "/invite/accept?token=" in invitation_link
 
         # Extract token from link
         token = invitation_link.split("token=")[1]

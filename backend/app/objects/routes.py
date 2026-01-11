@@ -54,7 +54,12 @@ async def list_objects(
     logger.info(f"data:{data}")
     object_service = object_registry.get_class(object_type)
     objects: Sequence[BaseDBModel]
-    objects, total = await object_service.get_list(transaction, data, request)
+
+    # Pass user_id and team_id for campaign access filtering
+    user_id: int = request.user
+    team_id: int | None = request.session.get("team_id")
+
+    objects, total = await object_service.get_list(transaction, data, user_id=user_id, team_id=team_id)
 
     # Convert objects to schemas
     object_schemas = [object_service.to_list_schema(obj) for obj in objects]
