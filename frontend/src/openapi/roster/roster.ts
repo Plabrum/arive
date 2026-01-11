@@ -30,6 +30,9 @@ import type {
 import type {
   RosterIdGetRoster400,
   RosterIdUpdateRoster400,
+  RosterInvitationsAcceptAcceptRosterInvitation200,
+  RosterInvitationsAcceptAcceptRosterInvitation400,
+  RosterInvitationsAcceptAcceptRosterInvitationParams,
   RosterSchema,
   RosterUpdateSchema
 } from '../ariveAPI.schemas';
@@ -249,4 +252,149 @@ export const useRosterIdUpdateRoster = <TError = RosterIdUpdateRoster400,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * @summary AcceptRosterInvitation
+ */
+export const rosterInvitationsAcceptAcceptRosterInvitation = (
+    params: RosterInvitationsAcceptAcceptRosterInvitationParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<RosterInvitationsAcceptAcceptRosterInvitation200>(
+      {url: `/roster/invitations/accept`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getRosterInvitationsAcceptAcceptRosterInvitationQueryKey = (params?: RosterInvitationsAcceptAcceptRosterInvitationParams,) => {
+    return [
+    `/roster/invitations/accept`, ...(params ? [params]: [])
+    ] as const;
+    }
+
     
+export const getRosterInvitationsAcceptAcceptRosterInvitationQueryOptions = <TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRosterInvitationsAcceptAcceptRosterInvitationQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>> = ({ signal }) => rosterInvitationsAcceptAcceptRosterInvitation(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RosterInvitationsAcceptAcceptRosterInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>>
+export type RosterInvitationsAcceptAcceptRosterInvitationQueryError = RosterInvitationsAcceptAcceptRosterInvitation400
+
+
+export function useRosterInvitationsAcceptAcceptRosterInvitation<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>,
+          TError,
+          Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRosterInvitationsAcceptAcceptRosterInvitation<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>,
+          TError,
+          Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRosterInvitationsAcceptAcceptRosterInvitation<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary AcceptRosterInvitation
+ */
+
+export function useRosterInvitationsAcceptAcceptRosterInvitation<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRosterInvitationsAcceptAcceptRosterInvitationQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getRosterInvitationsAcceptAcceptRosterInvitationSuspenseQueryOptions = <TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRosterInvitationsAcceptAcceptRosterInvitationQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>> = ({ signal }) => rosterInvitationsAcceptAcceptRosterInvitation(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RosterInvitationsAcceptAcceptRosterInvitationSuspenseQueryResult = NonNullable<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>>
+export type RosterInvitationsAcceptAcceptRosterInvitationSuspenseQueryError = RosterInvitationsAcceptAcceptRosterInvitation400
+
+
+export function useRosterInvitationsAcceptAcceptRosterInvitationSuspense<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options: { query:Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRosterInvitationsAcceptAcceptRosterInvitationSuspense<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRosterInvitationsAcceptAcceptRosterInvitationSuspense<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary AcceptRosterInvitation
+ */
+
+export function useRosterInvitationsAcceptAcceptRosterInvitationSuspense<TData = Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError = RosterInvitationsAcceptAcceptRosterInvitation400>(
+ params: RosterInvitationsAcceptAcceptRosterInvitationParams, options?: { query?:Partial<UseSuspenseQueryOptions<Awaited<ReturnType<typeof rosterInvitationsAcceptAcceptRosterInvitation>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRosterInvitationsAcceptAcceptRosterInvitationSuspenseQueryOptions(params,options)
+
+  const query = useSuspenseQuery(queryOptions, queryClient) as  UseSuspenseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+

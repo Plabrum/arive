@@ -301,6 +301,61 @@ class Campaign(TeamScopedBase, ThreadableMixin):
 - Real-time updates via WebSocket
 - See `backend/app/threads/README.md` for full details
 
+### 7. Roster Member Invitation System
+
+Roster members (talent/influencers) can receive their own user login with limited team access.
+
+**Key Components:**
+- `Roster.roster_user_id` - Links roster record to user account
+- `RoleLevel.ROSTER_MEMBER` - Special role for limited access
+- `TeamInvitationToken.roster_id` - Reuses existing invitation infrastructure
+- Application-layer filtering in list endpoints
+
+**Invitation Flow:**
+```python
+from app.roster.utils import generate_roster_invitation_link
+
+# Generate invitation
+invitation_link = await generate_roster_invitation_link(
+    db_session=session,
+    roster_id=int(roster.id),
+    team_id=int(team.id),
+    invited_email="talent@example.com",
+    invited_by_user_id=int(user.id),
+    expires_in_hours=72,
+)
+
+# Email sent automatically via InviteRosterMember action
+# User clicks link → account created → linked to roster → assigned ROSTER_MEMBER role
+```
+
+**Data Filtering Pattern:**
+```python
+from app.utils.roster_filters import get_roster_for_user, apply_roster_member_campaign_filter
+
+# In list endpoints
+async def list_campaigns(request: Request, transaction: AsyncSession, team_id: int):
+    query = select(Campaign).where(Campaign.team_id == team_id)
+
+    # Apply roster member filtering if applicable
+    roster = await get_roster_for_user(transaction, request.user, team_id)
+    if roster:
+        query = apply_roster_member_campaign_filter(query, roster.id)
+
+    result = await transaction.execute(query)
+    return result.scalars().all()
+```
+
+**Key Design Decisions:**
+- **Reuse TeamInvitationToken**: Added optional `roster_id` and `invited_role_level` fields instead of creating separate model
+- **Application-layer filtering**: Roster members log in with team scope but see filtered data based on campaign assignments
+- **Explicit linking**: `roster_user_id` provides clear relationship (not inferred from email matching)
+
+**Files to modify when adding roster filtering:**
+- `app/campaigns/routes.py` - Campaign list endpoints
+- `app/media/routes/media.py` - Media list endpoints
+- `app/deliverables/routes.py` - Deliverable list endpoints
+
 ## Testing
 
 ### Writing Tests

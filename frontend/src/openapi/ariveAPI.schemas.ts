@@ -730,6 +730,19 @@ export interface CreateWidgetSchema {
   size_h?: number;
 }
 
+export type CurrentUserSchemaRoleLevel = RoleLevel | null;
+
+export type CurrentUserSchemaTeamId = number | null;
+
+export interface CurrentUserSchema {
+  /** SQID-encoded identifier */
+  id: string;
+  email: string;
+  name: string;
+  role_level?: CurrentUserSchemaRoleLevel;
+  team_id?: CurrentUserSchemaTeamId;
+}
+
 export type DashboardSchemaConfig = {[key: string]: unknown};
 
 export type DashboardSchemaUserId = number | null;
@@ -1259,6 +1272,13 @@ export interface IntFieldValue {
   value: number;
   type: 'int';
 }
+
+export interface InviteRosterMemberAction {
+  data: InviteRosterMemberSchema;
+  action: 'roster_actions__roster_invite_member';
+}
+
+export interface InviteRosterMemberSchema { [key: string]: unknown }
 
 export interface InviteUserToTeamAction {
   data: InviteUserToTeamSchema;
@@ -2295,6 +2315,25 @@ export type RosterIdUpdateRoster400 = {
   extra?: RosterIdUpdateRoster400Extra;
 };
 
+export type RosterInvitationsAcceptAcceptRosterInvitationParams = {
+token: string;
+};
+
+export type RosterInvitationsAcceptAcceptRosterInvitation200 = { [key: string]: unknown };
+
+export type RosterInvitationsAcceptAcceptRosterInvitation400ExtraAnyOf = {[key: string]: unknown};
+
+export type RosterInvitationsAcceptAcceptRosterInvitation400Extra = null | RosterInvitationsAcceptAcceptRosterInvitation400ExtraAnyOf | unknown[];
+
+/**
+ * Validation Exception
+ */
+export type RosterInvitationsAcceptAcceptRosterInvitation400 = {
+  status_code: number;
+  detail: string;
+  extra?: RosterInvitationsAcceptAcceptRosterInvitation400Extra;
+};
+
 export type AuthSwitchScopeSwitchScope201 = { [key: string]: unknown };
 
 export type AuthSwitchScopeSwitchScope400ExtraAnyOf = {[key: string]: unknown};
@@ -2434,7 +2473,7 @@ export type ActionsActionGroupListActions400 = {
   extra?: ActionsActionGroupListActions400Extra;
 };
 
-export type ActionsActionGroupExecuteActionBody = CreateSavedViewAction | UpdateSavedViewAction | DeleteSavedViewAction | DuplicateSavedViewAction | DeleteInvoiceAction | UpdateInvoiceAction | CreateInvoiceAction | UpdateInvoiceStateAction | DeleteRosterAction | UpdateRosterAction | CreateRosterAction | DeleteBrandAction | UpdateBrandAction | CreateBrandAction | UpdateMessageAction | DeleteMessageAction | UpdateUserAction | DeleteTeamAction | InviteUserToTeamAction | DeleteCampaignAction | UpdateCampaignAction | AddDeliverableToCampaignAction | AddContractToCampaignAction | ReplaceContractAction | CreateCampaignAction | UpdateCampaignStateAction | DeleteDocumentAction | UpdateDocumentAction | DownloadDocumentAction | CreateDocumentAction | DeleteMediaAction | UpdateMediaAction | DownloadMediaAction | CreateMediaAction | CreateWidgetAction | EditWidgetAction | DeleteWidgetAction | CreateDashboardAction | EditDashboardAction | DeleteDashboardAction | UpdateDashboardAction | DeleteDeliverableAction | EditDeliverableAction | PublishDeliverableAction | AddMediaToDeliverableAction | CreateDeliverableAction | UpdateDeliverableStateAction | RemoveMediaFromDeliverableAction | AcceptDeliverableMediaAction | RejectDeliverableMediaAction;
+export type ActionsActionGroupExecuteActionBody = CreateSavedViewAction | UpdateSavedViewAction | DeleteSavedViewAction | DuplicateSavedViewAction | DeleteInvoiceAction | UpdateInvoiceAction | CreateInvoiceAction | UpdateInvoiceStateAction | DeleteRosterAction | UpdateRosterAction | CreateRosterAction | InviteRosterMemberAction | DeleteBrandAction | UpdateBrandAction | CreateBrandAction | UpdateMessageAction | DeleteMessageAction | UpdateUserAction | DeleteTeamAction | InviteUserToTeamAction | DeleteCampaignAction | UpdateCampaignAction | AddDeliverableToCampaignAction | AddContractToCampaignAction | ReplaceContractAction | CreateCampaignAction | UpdateCampaignStateAction | DeleteDocumentAction | UpdateDocumentAction | DownloadDocumentAction | CreateDocumentAction | DeleteMediaAction | UpdateMediaAction | DownloadMediaAction | CreateMediaAction | CreateWidgetAction | EditWidgetAction | DeleteWidgetAction | CreateDashboardAction | EditDashboardAction | DeleteDashboardAction | UpdateDashboardAction | DeleteDeliverableAction | EditDeliverableAction | PublishDeliverableAction | AddMediaToDeliverableAction | CreateDeliverableAction | UpdateDeliverableStateAction | RemoveMediaFromDeliverableAction | AcceptDeliverableMediaAction | RejectDeliverableMediaAction;
 
 export type ActionsActionGroupExecuteAction400ExtraAnyOf = {[key: string]: unknown};
 
@@ -2462,7 +2501,7 @@ export type ActionsActionGroupObjectIdListObjectActions400 = {
   extra?: ActionsActionGroupObjectIdListObjectActions400Extra;
 };
 
-export type ActionsActionGroupObjectIdExecuteObjectActionBody = CreateSavedViewAction | UpdateSavedViewAction | DeleteSavedViewAction | DuplicateSavedViewAction | DeleteInvoiceAction | UpdateInvoiceAction | CreateInvoiceAction | UpdateInvoiceStateAction | DeleteRosterAction | UpdateRosterAction | CreateRosterAction | DeleteBrandAction | UpdateBrandAction | CreateBrandAction | UpdateMessageAction | DeleteMessageAction | UpdateUserAction | DeleteTeamAction | InviteUserToTeamAction | DeleteCampaignAction | UpdateCampaignAction | AddDeliverableToCampaignAction | AddContractToCampaignAction | ReplaceContractAction | CreateCampaignAction | UpdateCampaignStateAction | DeleteDocumentAction | UpdateDocumentAction | DownloadDocumentAction | CreateDocumentAction | DeleteMediaAction | UpdateMediaAction | DownloadMediaAction | CreateMediaAction | CreateWidgetAction | EditWidgetAction | DeleteWidgetAction | CreateDashboardAction | EditDashboardAction | DeleteDashboardAction | UpdateDashboardAction | DeleteDeliverableAction | EditDeliverableAction | PublishDeliverableAction | AddMediaToDeliverableAction | CreateDeliverableAction | UpdateDeliverableStateAction | RemoveMediaFromDeliverableAction | AcceptDeliverableMediaAction | RejectDeliverableMediaAction;
+export type ActionsActionGroupObjectIdExecuteObjectActionBody = CreateSavedViewAction | UpdateSavedViewAction | DeleteSavedViewAction | DuplicateSavedViewAction | DeleteInvoiceAction | UpdateInvoiceAction | CreateInvoiceAction | UpdateInvoiceStateAction | DeleteRosterAction | UpdateRosterAction | CreateRosterAction | InviteRosterMemberAction | DeleteBrandAction | UpdateBrandAction | CreateBrandAction | UpdateMessageAction | DeleteMessageAction | UpdateUserAction | DeleteTeamAction | InviteUserToTeamAction | DeleteCampaignAction | UpdateCampaignAction | AddDeliverableToCampaignAction | AddContractToCampaignAction | ReplaceContractAction | CreateCampaignAction | UpdateCampaignStateAction | DeleteDocumentAction | UpdateDocumentAction | DownloadDocumentAction | CreateDocumentAction | DeleteMediaAction | UpdateMediaAction | DownloadMediaAction | CreateMediaAction | CreateWidgetAction | EditWidgetAction | DeleteWidgetAction | CreateDashboardAction | EditDashboardAction | DeleteDashboardAction | UpdateDashboardAction | DeleteDeliverableAction | EditDeliverableAction | PublishDeliverableAction | AddMediaToDeliverableAction | CreateDeliverableAction | UpdateDeliverableStateAction | RemoveMediaFromDeliverableAction | AcceptDeliverableMediaAction | RejectDeliverableMediaAction;
 
 export type ActionsActionGroupObjectIdExecuteObjectAction400ExtraAnyOf = {[key: string]: unknown};
 

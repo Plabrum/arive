@@ -72,7 +72,7 @@ async def generate_scoped_team_link(
 async def verify_team_invitation_token(
     db_session: AsyncSession,
     token: str,
-) -> dict[str, int | str] | None:
+) -> dict[str, int | str | None] | None:
     """
     Verify and decode a team invitation token.
 
@@ -110,4 +110,6 @@ async def verify_team_invitation_token(
         "team_id": invitation_token.team_id,
         "invited_email": invitation_token.invited_email,
         "invited_by_user_id": invitation_token.invited_by_user_id,
+        "roster_id": invitation_token.roster_id,  # Will be None for regular team invitations
+        "invited_role_level": invitation_token.invited_role_level,  # Will be None for regular invitations
     }

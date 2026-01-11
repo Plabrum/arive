@@ -201,8 +201,10 @@ async def accept_team_invitation(
             detail="Invalid or expired invitation. Please request a new invitation.",
         )
 
-    team_id = invitation_data["team_id"]
-    invited_email = invitation_data["invited_email"]
+    team_id: int = int(invitation_data["team_id"])  # type: ignore[arg-type]
+    invited_email: str = str(invitation_data["invited_email"])
+    roster_id = invitation_data.get("roster_id")  # None for regular team invitations
+    invited_role_level = invitation_data.get("invited_role_level")  # None for regular invitations
 
     # Check if user exists for this email
     user_stmt = select(User).where(User.email == invited_email)
@@ -233,22 +235,41 @@ async def accept_team_invitation(
     role_check_result = await transaction.execute(role_check_stmt)
     existing_role = role_check_result.scalar_one_or_none()
 
+    # Determine role level (use invited_role_level if present, otherwise default to MEMBER)
+    role_level: RoleLevel = RoleLevel(invited_role_level) if invited_role_level else RoleLevel.MEMBER
+
     if existing_role:
-        logger.warning(f"User {user.id} already has role in team {team_id}, continuing anyway")
+        # Update existing role to match invitation (in case role level changed)
+        existing_role.role_level = role_level
+        logger.info(f"Updated user {user.id} role in team {team_id} to {role_level}")
     else:
-        # Create role linking user to team (default: MEMBER)
+        # Create role linking user to team
         role = Role(
             user_id=user.id,
             team_id=team_id,
-            role_level=RoleLevel.MEMBER,
+            role_level=role_level,
         )
         transaction.add(role)
-        logger.info(f"Added user {user.id} to team {team_id} as MEMBER")
+        logger.info(f"Added user {user.id} to team {team_id} as {role_level}")
 
     # Update user state to ACTIVE if they were in NEEDS_TEAM state
     if user.state == UserStates.NEEDS_TEAM:
         user.state = UserStates.ACTIVE
         logger.info(f"Updated user {user.id} state to ACTIVE")
+
+    # If this is a roster invitation, link the user to the roster record
+    if roster_id:
+        from app.roster.models import Roster
+
+        roster_stmt = select(Roster).where(Roster.id == roster_id)
+        roster_result = await transaction.execute(roster_stmt)
+        roster = roster_result.scalar_one_or_none()
+
+        if roster:
+            roster.roster_user_id = user.id
+            logger.info(f"Linked roster {roster_id} to user {user.id}")
+        else:
+            logger.warning(f"Roster {roster_id} not found for invitation, skipping roster link")
 
     # Mark invitation as accepted (with lock to prevent race conditions)
     from app.auth.crypto import hash_token as hash_token_func

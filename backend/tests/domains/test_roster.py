@@ -1,8 +1,16 @@
 """Tests for roster domain: endpoints and basic operations."""
 
+from unittest.mock import AsyncMock, patch
+
 from litestar.testing import AsyncTestClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import TeamInvitationToken
+from app.roster.utils import generate_roster_invitation_link
+from app.teams.utils import verify_team_invitation_token
+from app.users.enums import RoleLevel
+from app.users.models import Role, User
 from app.utils.sqids import sqid_encode
 from tests.domains.test_helpers import execute_action, get_available_actions
 
@@ -179,3 +187,293 @@ class TestRoster:
         assert data["instagram_handle"] == "@influencer"
         assert data["tiktok_handle"] == "@tiktoker"
         assert data["youtube_channel"] == "UCxyz123"
+
+
+class TestRosterInvitations:
+    """Tests for roster member invitation system."""
+
+    async def test_generate_roster_invitation_link(
+        self,
+        db_session: AsyncSession,
+        roster,
+        team,
+        user,
+    ):
+        """Test generating a roster invitation link creates a valid token."""
+
+        # Generate invitation link
+        invitation_link = await generate_roster_invitation_link(
+            db_session=db_session,
+            roster_id=int(roster.id),
+            team_id=int(team.id),
+            invited_email="talent@example.com",
+            invited_by_user_id=int(user.id),
+            expires_in_hours=72,
+        )
+
+        # Verify link format
+        assert invitation_link.startswith("http")
+        assert "/roster/invitations/accept?token=" in invitation_link
+
+        # Extract token from link
+        token = invitation_link.split("token=")[1]
+        assert len(token) > 20  # Token should be reasonably long
+
+        # Verify token was saved in database
+        from app.auth.crypto import hash_token
+
+        token_hash = hash_token(token)
+        stmt = select(TeamInvitationToken).where(TeamInvitationToken.token_hash == token_hash)
+        result = await db_session.execute(stmt)
+        invitation = result.scalar_one_or_none()
+
+        assert invitation is not None
+        assert invitation.roster_id == roster.id
+        assert invitation.team_id == team.id
+        assert invitation.invited_email == "talent@example.com"
+        assert invitation.invited_role_level == RoleLevel.ROSTER_MEMBER
+        assert invitation.invited_by_user_id == user.id
+
+    async def test_verify_roster_invitation_token_valid(
+        self,
+        db_session: AsyncSession,
+        roster,
+        team,
+        user,
+    ):
+        """Test verifying a valid roster invitation token."""
+
+        # Generate invitation link
+        invitation_link = await generate_roster_invitation_link(
+            db_session=db_session,
+            roster_id=int(roster.id),
+            team_id=int(team.id),
+            invited_email="talent@example.com",
+            invited_by_user_id=int(user.id),
+            expires_in_hours=72,
+        )
+        await db_session.commit()
+
+        # Extract token
+        token = invitation_link.split("token=")[1]
+
+        # Verify token
+        invitation_data = await verify_team_invitation_token(db_session, token)
+
+        assert invitation_data is not None
+        assert invitation_data["roster_id"] == roster.id
+        assert invitation_data["team_id"] == team.id
+        assert invitation_data["invited_email"] == "talent@example.com"
+        assert invitation_data["invited_role_level"] == RoleLevel.ROSTER_MEMBER
+
+    async def test_verify_roster_invitation_token_invalid(
+        self,
+        db_session: AsyncSession,
+    ):
+        """Test verifying an invalid roster invitation token returns None."""
+
+        # Try to verify a fake token
+        invitation_data = await verify_team_invitation_token(db_session, "fake_token_12345")
+
+        assert invitation_data is None
+
+    async def test_invite_roster_member_action_availability(
+        self,
+        authenticated_client: AsyncTestClient,
+        roster,
+    ):
+        """Test that invite_member action is available for roster with email and no user."""
+
+        # Get available actions
+        actions = await get_available_actions(authenticated_client, "roster_actions", sqid_encode(roster.id))
+        action_keys = [action["action"] for action in actions]
+
+        # Should have invite_member action if roster has email
+        if roster.email:
+            assert "roster_actions__roster_invite_member" in action_keys
+        else:
+            assert "roster_actions__roster_invite_member" not in action_keys
+
+    async def test_invite_roster_member_action_not_available_when_user_exists(
+        self,
+        authenticated_client: AsyncTestClient,
+        roster,
+        db_session: AsyncSession,
+    ):
+        """Test that invite_member action is NOT available if roster already has a user."""
+
+        # Create a user and link to roster
+        existing_user = User(
+            email="existing@example.com",
+            name="Existing User",
+            email_verified=True,
+        )
+        db_session.add(existing_user)
+        await db_session.flush()
+
+        roster.roster_user_id = existing_user.id
+        await db_session.commit()
+
+        # Get available actions
+        actions = await get_available_actions(authenticated_client, "roster_actions", sqid_encode(roster.id))
+        action_keys = [action["action"] for action in actions]
+
+        # Should NOT have invite_member action since user already exists
+        assert "roster_actions__roster_invite_member" not in action_keys
+
+    @patch("app.emails.service.EmailService.send_roster_invitation_email")
+    async def test_execute_invite_roster_member_action(
+        self,
+        mock_send_email: AsyncMock,
+        authenticated_client: AsyncTestClient,
+        roster,
+        db_session: AsyncSession,
+    ):
+        """Test executing the invite roster member action."""
+
+        # Mock email sending
+        mock_send_email.return_value = "mock-message-id"
+
+        # Ensure roster has email
+        roster.email = "newtalent@example.com"
+        await db_session.commit()
+
+        # Execute invite action
+        response = await execute_action(
+            authenticated_client,
+            "roster_actions",
+            "roster_actions__roster_invite_member",
+            data={},
+            obj_id=sqid_encode(roster.id),
+        )
+
+        assert response.status_code in [200, 201, 204]
+
+        # Verify email was sent
+        mock_send_email.assert_called_once()
+        call_args = mock_send_email.call_args
+        assert call_args.kwargs["to_email"] == "newtalent@example.com"
+        assert call_args.kwargs["roster_name"] == roster.name
+        assert "invitation_link" in call_args.kwargs
+
+        # Verify invitation token was created
+        stmt = select(TeamInvitationToken).where(
+            TeamInvitationToken.roster_id == roster.id,
+            TeamInvitationToken.accepted_at.is_(None),
+        )
+        result = await db_session.execute(stmt)
+        invitation = result.scalar_one_or_none()
+
+        assert invitation is not None
+        assert invitation.invited_email == "newtalent@example.com"
+
+    async def test_accept_roster_invitation_creates_user_and_role(
+        self,
+        test_client: AsyncTestClient,
+        db_session: AsyncSession,
+        roster,
+        team,
+        user,
+    ):
+        """Test accepting a roster invitation creates user account and assigns role."""
+
+        # Generate invitation
+        invitation_link = await generate_roster_invitation_link(
+            db_session=db_session,
+            roster_id=int(roster.id),
+            team_id=int(team.id),
+            invited_email="newtalent@example.com",
+            invited_by_user_id=int(user.id),
+            expires_in_hours=72,
+        )
+        await db_session.commit()
+
+        # Extract token
+        token = invitation_link.split("token=")[1]
+
+        # Accept invitation (no auth required for this endpoint)
+        response = await test_client.get(f"/teams/invitations/accept?token={token}")
+
+        # Should redirect on success
+        assert response.status_code == 302
+
+        # Verify user was created
+        stmt = select(User).where(User.email == "newtalent@example.com")
+        result = await db_session.execute(stmt)
+        new_user = result.scalar_one_or_none()
+
+        assert new_user is not None
+        assert new_user.email == "newtalent@example.com"
+        assert new_user.name == roster.name
+        assert new_user.email_verified is True
+
+        # Verify roster is linked to user
+        await db_session.refresh(roster)
+        assert roster.roster_user_id == new_user.id
+
+        # Verify role was created
+        role_stmt = select(Role).where(
+            Role.user_id == new_user.id,
+            Role.team_id == team.id,
+        )
+        role_result = await db_session.execute(role_stmt)
+        role = role_result.scalar_one_or_none()
+
+        assert role is not None
+        assert role.role_level == RoleLevel.ROSTER_MEMBER
+
+    async def test_accept_roster_invitation_with_existing_user(
+        self,
+        test_client: AsyncTestClient,
+        db_session: AsyncSession,
+        roster,
+        team,
+        user,
+    ):
+        """Test accepting invitation when user already exists links them to roster."""
+
+        # Create user first
+        existing_user = User(
+            email="existing@example.com",
+            name="Different Name",
+            email_verified=False,
+        )
+        db_session.add(existing_user)
+        await db_session.flush()
+
+        # Generate invitation
+        invitation_link = await generate_roster_invitation_link(
+            db_session=db_session,
+            roster_id=int(roster.id),
+            team_id=int(team.id),
+            invited_email="existing@example.com",
+            invited_by_user_id=int(user.id),
+            expires_in_hours=72,
+        )
+        await db_session.commit()
+
+        # Extract token
+        token = invitation_link.split("token=")[1]
+
+        # Accept invitation
+        response = await test_client.get(f"/teams/invitations/accept?token={token}")
+        assert response.status_code == 302
+
+        # Verify roster is linked to existing user
+        await db_session.refresh(roster)
+        assert roster.roster_user_id == existing_user.id
+
+        # Verify email was marked as verified
+        await db_session.refresh(existing_user)
+        assert existing_user.email_verified is True
+
+    async def test_accept_roster_invitation_expired_token(
+        self,
+        test_client: AsyncTestClient,
+    ):
+        """Test accepting an expired invitation token returns error."""
+
+        # Try with invalid token
+        response = await test_client.get("/teams/invitations/accept?token=expired_fake_token")
+
+        assert response.status_code == 400
