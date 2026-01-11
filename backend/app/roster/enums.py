@@ -16,3 +16,4 @@ class RosterActions(StrEnum):
     create = "roster.create"
     delete = "roster.delete"
     update = "roster.update"
+    invite_member = "roster.invite_member"

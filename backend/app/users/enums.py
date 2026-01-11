@@ -14,6 +14,8 @@ class RoleLevel(StrEnum):
     ADMIN = auto()
     MEMBER = auto()
     VIEWER = auto()
+    ROSTER_MEMBER = auto()  # Limited access for talent/influencers
+    GUEST_BRAND = auto()  # Limited access for brands (future)
 
 
 class UserActions(StrEnum):
