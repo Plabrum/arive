@@ -17,7 +17,6 @@ export function RosterDetailPage() {
   return (
     <PageTopBar
       title={data.name}
-      state={data.state}
       actions={
         <ObjectActions
           data={data}
