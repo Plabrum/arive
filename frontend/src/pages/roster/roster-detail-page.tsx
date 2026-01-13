@@ -2,7 +2,7 @@ import { useParams } from '@tanstack/react-router';
 import { ObjectActions } from '@/components/object-detail';
 import { ObjectDetailTabs } from '@/components/object-detail-tabs';
 import { PageTopBar } from '@/components/page-topbar';
-import { RosterFields } from '@/components/roster-detail';
+import { CreatorDetailsLayout } from '@/components/roster-detail';
 import { TabsContent } from '@/components/ui/tabs';
 import { ActionGroupType } from '@/openapi/ariveAPI.schemas';
 import { useRosterIdGetRosterSuspense } from '@/openapi/roster/roster';
@@ -24,17 +24,11 @@ export function RosterDetailPage() {
       }
     >
       <ObjectDetailTabs
-        tabs={[{ value: 'summary', label: 'Summary' }]}
+        tabs={[{ value: 'summary', label: 'Creator Details' }]}
         defaultTab="summary"
       >
         <TabsContent value="summary" className="space-y-6">
-          <div className="space-y-6">
-            {/* Two Column Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Left Column - Fields */}
-              <RosterFields roster={data} />
-            </div>
-          </div>
+          <CreatorDetailsLayout roster={data} />
         </TabsContent>
       </ObjectDetailTabs>
     </PageTopBar>
