@@ -98,10 +98,29 @@ export function RosterFields({ roster }: RosterFieldsProps) {
             </div>
           )}
 
+          {roster.mailing_address && (
+            <div className="space-y-1">
+              <dt className="text-muted-foreground text-sm font-medium">
+                Mailing Address
+              </dt>
+              <dd className="text-sm">
+                {[
+                  roster.mailing_address.address1,
+                  roster.mailing_address.address2,
+                  roster.mailing_address.city,
+                  roster.mailing_address.state,
+                  roster.mailing_address.zip,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+              </dd>
+            </div>
+          )}
+
           {roster.address && (
             <div className="space-y-1">
               <dt className="text-muted-foreground text-sm font-medium">
-                Address
+                Home Address
               </dt>
               <dd className="text-sm">
                 {[

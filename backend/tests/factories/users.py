@@ -80,6 +80,7 @@ class RosterFactory(BaseFactory):
     gender = None
     instagram_handle = Use(lambda: f"@{BaseFactory.__faker__.user_name()}")
     address_id = None  # Don't auto-generate address references
+    mailing_address_id = None  # Don't auto-generate mailing address references
     state = RosterStates.ACTIVE
     created_at = Use(
         BaseFactory.__faker__.date_time_between,

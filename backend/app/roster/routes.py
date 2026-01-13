@@ -30,6 +30,7 @@ async def get_roster(
         id,
         load_options=[
             joinedload(Roster.address),
+            joinedload(Roster.mailing_address),
             joinedload(Roster.thread).options(
                 selectinload(Thread.messages),
                 selectinload(Thread.read_statuses),
@@ -61,6 +62,23 @@ async def get_roster(
             team_id=roster.address.team_id,
         )
 
+    # Convert mailing address to schema
+    mailing_address_schema = None
+    if roster.mailing_address:
+        mailing_address_schema = AddressSchema(
+            id=roster.mailing_address.id,
+            address1=roster.mailing_address.address1,
+            address2=roster.mailing_address.address2,
+            city=roster.mailing_address.city,
+            state=roster.mailing_address.state,
+            zip=roster.mailing_address.zip,
+            country=roster.mailing_address.country,
+            address_type=roster.mailing_address.address_type,
+            created_at=roster.mailing_address.created_at,
+            updated_at=roster.mailing_address.updated_at,
+            team_id=roster.mailing_address.team_id,
+        )
+
     # Compute city from address
     city = roster.address.city if roster.address else None
 
@@ -80,6 +98,7 @@ async def get_roster(
         birthdate=roster.birthdate,
         gender=roster.gender,
         address=address_schema,
+        mailing_address=mailing_address_schema,
         instagram_handle=roster.instagram_handle,
         facebook_handle=roster.facebook_handle,
         tiktok_handle=roster.tiktok_handle,
@@ -107,7 +126,10 @@ async def update_roster(
         transaction,
         Roster,
         id,
-        load_options=[joinedload(Roster.address)],
+        load_options=[
+            joinedload(Roster.address),
+            joinedload(Roster.mailing_address),
+        ],
     )
     await update_model(
         session=transaction,
@@ -134,6 +156,23 @@ async def update_roster(
             team_id=roster.address.team_id,
         )
 
+    # Convert mailing address to schema
+    mailing_address_schema = None
+    if roster.mailing_address:
+        mailing_address_schema = AddressSchema(
+            id=roster.mailing_address.id,
+            address1=roster.mailing_address.address1,
+            address2=roster.mailing_address.address2,
+            city=roster.mailing_address.city,
+            state=roster.mailing_address.state,
+            zip=roster.mailing_address.zip,
+            country=roster.mailing_address.country,
+            address_type=roster.mailing_address.address_type,
+            created_at=roster.mailing_address.created_at,
+            updated_at=roster.mailing_address.updated_at,
+            team_id=roster.mailing_address.team_id,
+        )
+
     # Compute city from address
     city = roster.address.city if roster.address else None
 
@@ -153,6 +192,7 @@ async def update_roster(
         birthdate=roster.birthdate,
         gender=roster.gender,
         address=address_schema,
+        mailing_address=mailing_address_schema,
         instagram_handle=roster.instagram_handle,
         facebook_handle=roster.facebook_handle,
         tiktok_handle=roster.tiktok_handle,

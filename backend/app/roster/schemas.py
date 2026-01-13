@@ -17,6 +17,7 @@ class RosterSchema(BaseSchema):
     birthdate: date | None
     gender: str | None
     address: AddressSchema | None
+    mailing_address: AddressSchema | None
     instagram_handle: str | None
     facebook_handle: str | None
     tiktok_handle: str | None
@@ -45,6 +46,7 @@ class RosterUpdateSchema(BaseSchema):
     birthdate: date | None
     gender: str | None
     address: AddressCreateSchema | None
+    mailing_address: AddressCreateSchema | None
     instagram_handle: str | None
     facebook_handle: str | None
     tiktok_handle: str | None
@@ -61,6 +63,7 @@ class RosterCreateSchema(BaseSchema):
     birthdate: date | None = None
     gender: str | None = None
     address: AddressCreateSchema | None = None
+    mailing_address: AddressCreateSchema | None = None
     instagram_handle: str | None = None
     facebook_handle: str | None = None
     tiktok_handle: str | None = None

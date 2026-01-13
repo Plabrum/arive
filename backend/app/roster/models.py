@@ -64,8 +64,15 @@ class Roster(
         index=True,
     )
 
-    # Address relationship
+    # Address relationships (home address)
     address_id: Mapped[Sqid | None] = mapped_column(
+        sa.ForeignKey("addresses.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Mailing address (separate from home address)
+    mailing_address_id: Mapped[Sqid | None] = mapped_column(
         sa.ForeignKey("addresses.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -74,10 +81,17 @@ class Roster(
     # Relationship to user (who owns/manages this roster member)
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
 
-    # Relationship to address
+    # Relationship to home address
     address: Mapped["Address | None"] = relationship(
         "Address",
         foreign_keys=[address_id],
+        lazy="joined",
+    )
+
+    # Relationship to mailing address
+    mailing_address: Mapped["Address | None"] = relationship(
+        "Address",
+        foreign_keys=[mailing_address_id],
         lazy="joined",
     )
 
