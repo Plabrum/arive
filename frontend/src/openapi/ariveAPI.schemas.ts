@@ -1660,6 +1660,8 @@ export type RosterCreateSchemaGender = string | null;
 
 export type RosterCreateSchemaAddress = AddressCreateSchema | null;
 
+export type RosterCreateSchemaMailingAddress = AddressCreateSchema | null;
+
 export type RosterCreateSchemaInstagramHandle = string | null;
 
 export type RosterCreateSchemaFacebookHandle = string | null;
@@ -1677,6 +1679,7 @@ export interface RosterCreateSchema {
   birthdate?: RosterCreateSchemaBirthdate;
   gender?: RosterCreateSchemaGender;
   address?: RosterCreateSchemaAddress;
+  mailing_address?: RosterCreateSchemaMailingAddress;
   instagram_handle?: RosterCreateSchemaInstagramHandle;
   facebook_handle?: RosterCreateSchemaFacebookHandle;
   tiktok_handle?: RosterCreateSchemaTiktokHandle;
@@ -1716,6 +1719,8 @@ export type RosterSchemaGender = string | null;
 
 export type RosterSchemaAddress = AddressSchema | null;
 
+export type RosterSchemaMailingAddress = AddressSchema | null;
+
 export type RosterSchemaInstagramHandle = string | null;
 
 export type RosterSchemaFacebookHandle = string | null;
@@ -1743,6 +1748,7 @@ export interface RosterSchema {
   birthdate?: RosterSchemaBirthdate;
   gender?: RosterSchemaGender;
   address?: RosterSchemaAddress;
+  mailing_address?: RosterSchemaMailingAddress;
   instagram_handle?: RosterSchemaInstagramHandle;
   facebook_handle?: RosterSchemaFacebookHandle;
   tiktok_handle?: RosterSchemaTiktokHandle;
@@ -1768,6 +1774,8 @@ export type RosterUpdateSchemaGender = string | null;
 
 export type RosterUpdateSchemaAddress = AddressCreateSchema | null;
 
+export type RosterUpdateSchemaMailingAddress = AddressCreateSchema | null;
+
 export type RosterUpdateSchemaInstagramHandle = string | null;
 
 export type RosterUpdateSchemaFacebookHandle = string | null;
@@ -1785,6 +1793,7 @@ export interface RosterUpdateSchema {
   birthdate?: RosterUpdateSchemaBirthdate;
   gender?: RosterUpdateSchemaGender;
   address?: RosterUpdateSchemaAddress;
+  mailing_address?: RosterUpdateSchemaMailingAddress;
   instagram_handle?: RosterUpdateSchemaInstagramHandle;
   facebook_handle?: RosterUpdateSchemaFacebookHandle;
   tiktok_handle?: RosterUpdateSchemaTiktokHandle;
