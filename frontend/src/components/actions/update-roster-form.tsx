@@ -8,7 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { RosterUpdateSchema } from '@/openapi/ariveAPI.schemas';
+import { useState, useEffect } from 'react';
 
 const {
   FormSheet,
@@ -45,6 +47,25 @@ export function UpdateRosterForm({
   isSubmitting,
   actionLabel,
 }: UpdateRosterFormProps) {
+  // Check if addresses are the same on load
+  const addressesMatch =
+    defaultValues?.address &&
+    defaultValues?.mailing_address &&
+    JSON.stringify(defaultValues.address) ===
+      JSON.stringify(defaultValues.mailing_address);
+
+  const [sameAsMailing, setSameAsMailing] = useState(addressesMatch || false);
+
+  // Reset when defaultValues change
+  useEffect(() => {
+    const match =
+      defaultValues?.address &&
+      defaultValues?.mailing_address &&
+      JSON.stringify(defaultValues.address) ===
+        JSON.stringify(defaultValues.mailing_address);
+    setSameAsMailing(match || false);
+  }, [defaultValues]);
+
   return (
     <FormSheet
       isOpen={isOpen}
@@ -53,7 +74,13 @@ export function UpdateRosterForm({
       }}
       title={actionLabel}
       subTitle="Update the roster member information below."
-      onSubmit={onSubmit}
+      onSubmit={(data) => {
+        // If "same as mailing" is checked, copy mailing_address to address
+        if (sameAsMailing) {
+          data.address = data.mailing_address;
+        }
+        onSubmit(data);
+      }}
       defaultValues={defaultValues}
       isSubmitting={isSubmitting}
       submitText="Update Roster Member"
@@ -113,7 +140,29 @@ export function UpdateRosterForm({
       />
 
       {/* Address Section */}
-      <FormAddress name="address" />
+      <div className="space-y-4">
+        {/* Mailing Address (first) */}
+        <FormAddress name="mailing_address" label="Mailing Address" />
+
+        {/* Home Address (second, with checkbox) */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="same-as-mailing"
+              checked={sameAsMailing}
+              onCheckedChange={(checked) => setSameAsMailing(checked === true)}
+            />
+            <label
+              htmlFor="same-as-mailing"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Same as mailing address
+            </label>
+          </div>
+
+          {!sameAsMailing && <FormAddress name="address" label="Home Address" />}
+        </div>
+      </div>
 
       {/* Birthday & Gender Section */}
       <div className="space-y-4 rounded-lg border p-4">
