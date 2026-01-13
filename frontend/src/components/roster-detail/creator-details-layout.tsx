@@ -1,4 +1,4 @@
-import { User } from 'lucide-react';
+import { User, Mail, Phone, MapPin } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -40,39 +40,60 @@ export function CreatorDetailsLayout({ roster }: CreatorDetailsLayoutProps) {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
       {/* Left Column */}
       <div className="space-y-6">
-        {/* Profile Photo */}
+        {/* Profile Photo & Contact Info Combined */}
         <Card>
-          <CardContent className="flex items-center justify-center p-12">
-            {roster.profile_photo_id ? (
-              <div className="text-muted-foreground text-sm">
-                Photo placeholder
+          <CardContent className="p-6">
+            <div className="flex gap-4">
+              {/* Photo - Small square on left */}
+              <div className="flex-shrink-0">
+                {roster.profile_photo_id ? (
+                  <img
+                    src={`/api/media/${roster.profile_photo_id}/view`}
+                    alt={roster.name}
+                    className="h-20 w-20 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="bg-muted flex h-20 w-20 items-center justify-center rounded-lg">
+                    <User className="text-muted-foreground h-10 w-10" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="bg-muted flex h-32 w-32 items-center justify-center rounded-lg">
-                <User className="text-muted-foreground h-16 w-16" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Contact Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <div className="font-semibold">{roster.name}</div>
+              {/* Right side - Name and contact info with icons */}
+              <div className="flex-1 space-y-2">
+                <div className="font-semibold text-lg">{roster.name}</div>
+
+                {roster.email && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Mail className="h-4 w-4" />
+                    <span>{roster.email}</span>
+                  </div>
+                )}
+
+                {roster.phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Phone className="h-4 w-4" />
+                    <span>{roster.phone}</span>
+                  </div>
+                )}
+
+                {roster.address && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <MapPin className="h-4 w-4" />
+                    <span>
+                      {[
+                        roster.address.street_address,
+                        roster.address.city,
+                        roster.address.state,
+                        roster.address.zip_code,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            {roster.email && (
-              <div className="text-muted-foreground text-sm">{roster.email}</div>
-            )}
-            {roster.phone && (
-              <div className="text-muted-foreground text-sm">{roster.phone}</div>
-            )}
-            {roster.city && (
-              <div className="text-muted-foreground text-sm">{roster.city}</div>
-            )}
           </CardContent>
         </Card>
 
