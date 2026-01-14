@@ -10,17 +10,21 @@ interface RosterMediaKitProps {
 interface SocialPlatform {
   name: string;
   handle: string | null | undefined;
+  url: string;
   icon: React.ReactNode;
   color: string;
   followers?: number; // Placeholder for future data
 }
 
 export function RosterMediaKit({ roster }: RosterMediaKitProps) {
-  // Build array of social platforms
+  // Build array of social platforms with URLs
   const platforms: SocialPlatform[] = [
     {
       name: 'Instagram',
       handle: roster.instagram_handle,
+      url: roster.instagram_handle
+        ? `https://instagram.com/${roster.instagram_handle.replace('@', '')}`
+        : '',
       icon: <Instagram className="h-5 w-5" />,
       color: 'text-pink-500',
       followers: 0, // Placeholder
@@ -28,6 +32,9 @@ export function RosterMediaKit({ roster }: RosterMediaKitProps) {
     {
       name: 'TikTok',
       handle: roster.tiktok_handle,
+      url: roster.tiktok_handle
+        ? `https://tiktok.com/@${roster.tiktok_handle.replace('@', '')}`
+        : '',
       icon: (
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
@@ -39,6 +46,7 @@ export function RosterMediaKit({ roster }: RosterMediaKitProps) {
     {
       name: 'YouTube',
       handle: roster.youtube_channel,
+      url: roster.youtube_channel || '',
       icon: <Youtube className="h-5 w-5" />,
       color: 'text-red-500',
       followers: 0, // Placeholder
@@ -46,6 +54,9 @@ export function RosterMediaKit({ roster }: RosterMediaKitProps) {
     {
       name: 'Facebook',
       handle: roster.facebook_handle,
+      url: roster.facebook_handle
+        ? `https://facebook.com/${roster.facebook_handle}`
+        : '',
       icon: <Facebook className="h-5 w-5" />,
       color: 'text-blue-500',
       followers: 0, // Placeholder
@@ -115,25 +126,22 @@ export function RosterMediaKit({ roster }: RosterMediaKitProps) {
         {/* Social Follower Counts Overview */}
         <Card>
           <CardContent className="py-6">
-            <div className="mb-4 text-center">
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Social Follower Counts Overview
-              </h3>
-            </div>
-
-            {/* Platform Breakdown */}
+            {/* Platform Breakdown - Now with clickable links */}
             <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
               {activePlatforms.map((platform) => (
-                <div
+                <a
                   key={platform.name}
-                  className="flex flex-col items-center rounded-lg border p-3"
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center rounded-lg border p-3 transition-all hover:scale-105 hover:border-primary hover:shadow-md"
                 >
                   <div className={platform.color}>{platform.icon}</div>
                   <p className="mt-2 text-xs font-medium">{platform.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {formatNumber(platform.followers || 0)}
                   </p>
-                </div>
+                </a>
               ))}
             </div>
 
