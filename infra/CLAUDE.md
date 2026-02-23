@@ -33,6 +33,79 @@ terraform plan
 git push origin main
 ```
 
+## Infrastructure Control
+
+### Module Structure
+
+Infrastructure is organized using Terraform modules for clean, maintainable code:
+
+```
+infra/
+├── main.tf                          # Root module with infrastructure toggle
+├── modules/
+│   └── infrastructure/              # All AWS resources
+│       ├── main.tf                 # Core infrastructure (VPC, ECS, RDS)
+│       ├── ses.tf                  # Email infrastructure
+│       ├── lambda.tf               # Lambda functions
+│       ├── variables.tf            # Module inputs
+│       └── outputs.tf              # Module outputs
+```
+
+**Key benefit:** All infrastructure resources live inside a single module, controlled by one `count` parameter. No `[0]` references needed in resource code.
+
+### Cost Control Options
+
+#### Option 1: Disable Services Only (Recommended for Short-Term Savings)
+
+Spin down compute while keeping infrastructure (saves ~$20-30/month):
+
+```bash
+cd infra
+echo 'service_enabled = false' > terraform.tfvars
+git add terraform.tfvars
+git commit -m "infra: disable services to save costs"
+git push origin main
+```
+
+**What gets disabled:**
+- ✅ API ECS tasks ($10-15/month saved)
+- ✅ Worker ECS tasks ($10-15/month saved)
+- ✅ Database auto-pauses after 5 min ($15-30/month saved)
+
+**What remains active:**
+- 📍 ALB (~$20/month)
+- 📍 ECR, S3, Secrets Manager (~$2-5/month)
+
+**Total cost:** ~$22-27/month (down from ~$50-80/month)
+
+#### Option 2: Destroy All Infrastructure (Maximum Savings)
+
+⚠️ **Use with caution** - destroys ALL resources including data stores.
+
+```bash
+cd infra
+echo 'infrastructure_enabled = false' > terraform.tfvars
+git add terraform.tfvars
+git commit -m "infra: destroy all infrastructure"
+git push origin main
+```
+
+**What gets destroyed:**
+- ❌ All 64 AWS resources (VPC, RDS, S3, ECS, ALB, etc.)
+- ❌ Database data (unless you have backups)
+- ❌ S3 stored files (unless versioning/lifecycle rules apply)
+
+**Total cost:** $0/month
+
+**Re-enable infrastructure:**
+```bash
+echo 'infrastructure_enabled = true' > terraform.tfvars
+git commit -m "infra: re-enable infrastructure"
+git push origin main
+```
+
+⚠️ **State Migration Note:** If you have existing infrastructure and haven't migrated state to the module structure yet, contact the team before enabling/disabling to avoid unintended resource recreation.
+
 ## Architecture Overview
 
 ### AWS Services
@@ -49,24 +122,29 @@ git push origin main
 ### Infrastructure as Code
 
 - **Tool**: Terraform
-- **State**: Stored in Terraform Cloud or S3 backend
-- **Modules**: Organized by service (networking, database, compute, storage)
+- **State**: Stored in Terraform Cloud (S3 backend)
+- **Pattern**: Single infrastructure module with conditional creation via `count`
+- **Organization**: All resources in one module for clean toggling
 
 ## Project Structure
 
 ```
 infra/
-├── main.tf              # Root module and provider config
-├── variables.tf         # Input variables with defaults
-├── outputs.tf           # Output values (URLs, ARNs, etc.)
-├── backend.tf           # Terraform state backend configuration
-├── modules/             # Reusable Terraform modules
-│   ├── networking/     # VPC, subnets, security groups
-│   ├── database/       # Aurora Serverless v2
-│   ├── compute/        # ECS cluster, services, tasks
-│   └── storage/        # S3 buckets
-└── README.md           # Infrastructure documentation
+├── main.tf                          # Root: providers, variables, module invocation
+├── modules/
+│   └── infrastructure/              # Infrastructure module (conditionally created)
+│       ├── main.tf                 # Core: VPC, ECS, RDS, ALB, Route53
+│       ├── ses.tf                  # Email: SES domain, rules, S3 storage
+│       ├── lambda.tf               # Functions: Email webhook handler
+│       ├── variables.tf            # Module input variables
+│       └── outputs.tf              # Module outputs (ARNs, URLs, etc.)
+└── CLAUDE.md                        # This file
 ```
+
+**Key Pattern:**
+- Root `main.tf` invokes module with `count = var.infrastructure_enabled ? 1 : 0`
+- All 64 resources live inside module (no `[0]` indexing needed)
+- Single variable toggles entire infrastructure
 
 ## Deployment Workflow
 

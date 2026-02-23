@@ -145,9 +145,3 @@ resource "aws_cloudwatch_log_group" "email_webhook_lambda" {
     Environment = var.environment
   }
 }
-
-# Output
-output "lambda_function_name" {
-  description = "Email webhook Lambda function name"
-  value       = aws_lambda_function.email_webhook.function_name
-}
