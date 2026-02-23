@@ -2,9 +2,6 @@
 # AWS SES Configuration (Outbound Email Only)
 # ================================
 
-# Data source for current AWS account
-data "aws_caller_identity" "current" {}
-
 # SES Domain Identity
 resource "aws_ses_domain_identity" "main" {
   domain = "tryarive.com"
@@ -184,22 +181,3 @@ resource "aws_route53_record" "ses_mx" {
 }
 
 # Outputs for verification
-output "ses_domain_verification_status" {
-  description = "SES domain verification status (check after apply)"
-  value       = "Check AWS SES Console for verification status"
-}
-
-output "ses_dkim_status" {
-  description = "SES DKIM status (check after apply)"
-  value       = "Check AWS SES Console for DKIM verification status"
-}
-
-output "ses_configuration_set" {
-  description = "SES configuration set name"
-  value       = aws_ses_configuration_set.main.name
-}
-
-output "inbound_emails_bucket" {
-  description = "S3 bucket for inbound emails"
-  value       = aws_s3_bucket.inbound_emails.bucket
-}

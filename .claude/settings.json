@@ -143,5 +143,5 @@
     "linear@claude-plugins-official": true
   },
   "outputStyle": "Explanatory",
-  "alwaysThinkingEnabled": false
+  "alwaysThinkingEnabled": true
 }
