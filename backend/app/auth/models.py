@@ -75,11 +75,12 @@ class TeamInvitationToken(BaseDBModel):
 
     __tablename__ = "team_invitation_tokens"
     __table_args__ = (
-        # Prevent duplicate pending invitations for same email+team
+        # Prevent duplicate pending invitations (same team + email + type)
         sa.Index(
-            "ix_team_invitation_pending",
+            "ix_invitation_pending_unique",
             "team_id",
             "invited_email",
+            "invitation_type",
             unique=True,
             postgresql_where=sa.text("accepted_at IS NULL"),
         ),
@@ -105,6 +106,23 @@ class TeamInvitationToken(BaseDBModel):
     accepted_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True, default=None)
     """When this invitation was accepted (null if not accepted yet)"""
 
+    # Universal invitation platform fields
+    invitation_type: Mapped[str] = mapped_column(
+        sa.Text,
+        nullable=False,
+        default="team_member",
+        server_default="team_member",
+    )
+    """Type of invitation (team_member, roster_member, guest_brand, etc.)"""
+
+    invitation_context: Mapped[dict] = mapped_column(
+        sa.JSON,
+        nullable=False,
+        default=dict,
+        server_default=sa.text("'{}'::json"),
+    )
+    """Type-specific context (e.g., {'roster_id': 123} or {'brand_id': 456})"""
+
     # Relationships
     team: Mapped["Team"] = relationship("Team", back_populates="invitation_tokens")
     invited_by: Mapped["User"] = relationship("User", foreign_keys=[invited_by_user_id])
@@ -117,6 +135,8 @@ class TeamInvitationToken(BaseDBModel):
         invited_by_user_id: int,
         token_hash: str,
         expires_in_hours: int = 72,
+        invitation_type: str = "team_member",
+        invitation_context: dict | None = None,
     ) -> "TeamInvitationToken":
         """Create a new team invitation token.
 
@@ -126,6 +146,8 @@ class TeamInvitationToken(BaseDBModel):
             invited_by_user_id: ID of the user sending the invitation
             token_hash: SHA-256 hash of the token
             expires_in_hours: Hours until expiration (default: 72)
+            invitation_type: Type of invitation (team_member, roster_member, etc.)
+            invitation_context: Type-specific context (e.g., {'roster_id': 123})
 
         Returns:
             New TeamInvitationToken instance
@@ -136,6 +158,8 @@ class TeamInvitationToken(BaseDBModel):
             invited_by_user_id=invited_by_user_id,
             token_hash=token_hash,
             expires_at=datetime.now(tz=UTC) + timedelta(hours=expires_in_hours),
+            invitation_type=invitation_type,
+            invitation_context=invitation_context or {},
         )
 
     def is_valid(self) -> bool:

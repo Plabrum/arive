@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Sequence
 
-from litestar import Router, get, post
+from litestar import Request, Router, get, post
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.base.models import BaseDBModel
@@ -49,11 +49,17 @@ async def list_objects(
     data: ObjectListRequest,
     transaction: AsyncSession,
     object_registry: ObjectRegistry,
+    request: Request,
 ) -> ObjectListResponse:
     logger.info(f"data:{data}")
     object_service = object_registry.get_class(object_type)
     objects: Sequence[BaseDBModel]
-    objects, total = await object_service.get_list(transaction, data)
+
+    # Pass user_id and team_id for campaign access filtering
+    user_id: int = request.user
+    team_id: int | None = request.session.get("team_id")
+
+    objects, total = await object_service.get_list(transaction, data, user_id=user_id, team_id=team_id)
 
     # Convert objects to schemas
     object_schemas = [object_service.to_list_schema(obj) for obj in objects]

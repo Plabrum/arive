@@ -150,15 +150,36 @@ class BaseObject[O: BaseDBModel](ABC):
         return or_(*conditions) if conditions else None
 
     @classmethod
-    async def query_from_request(cls, session: AsyncSession, request: ObjectListRequest):
+    async def query_from_request(
+        cls,
+        session: AsyncSession,
+        request: ObjectListRequest,
+        user_id: int | None = None,
+        team_id: int | None = None,
+    ):
         """Build query from request filters, sorts, and search.
 
         Scope and soft-delete filtering are applied automatically via SQLAlchemy events.
+        Campaign-scoped filtering is applied if the user has limited campaign access.
+
+        Args:
+            session: Database session
+            request: Object list request with filters, sorts, pagination
+            user_id: Current user ID (for campaign access filtering)
+            team_id: Current team ID (for campaign access filtering)
         """
         query = select(cls.model())
 
         # Apply load options (eager loading, etc.)
         query = query.options(*cls.load_options)
+
+        # Apply campaign-scoped filtering if user/team provided
+        if user_id is not None and team_id is not None:
+            from app.utils.campaign_access import filter_by_campaign_access, get_user_campaign_access
+
+            campaign_ids = await get_user_campaign_access(session, user_id, team_id)
+            if campaign_ids is not None:  # User has limited access
+                query = filter_by_campaign_access(query, campaign_ids, cls.model())
 
         # Apply search filter if provided
         search_filter = cls.create_search_filter(request.search)
@@ -189,12 +210,25 @@ class BaseObject[O: BaseDBModel](ABC):
         return obj
 
     @classmethod
-    async def get_list(cls, session: AsyncSession, request: ObjectListRequest) -> tuple[Sequence[BaseDBModel], int]:
+    async def get_list(
+        cls,
+        session: AsyncSession,
+        request: ObjectListRequest,
+        user_id: int | None = None,
+        team_id: int | None = None,
+    ) -> tuple[Sequence[BaseDBModel], int]:
         """Get list of objects with filtering and pagination.
 
         Scope and soft-delete filtering are applied automatically via SQLAlchemy events.
+        Campaign-scoped filtering is applied if the user has limited campaign access.
+
+        Args:
+            session: Database session
+            request: Object list request with filters, sorts, pagination
+            user_id: Current user ID (for campaign access filtering)
+            team_id: Current team ID (for campaign access filtering)
         """
-        query = await cls.query_from_request(session, request)
+        query = await cls.query_from_request(session, request, user_id, team_id)
         total_rows = await session.execute(select(func.count()).select_from(query.subquery()))
         total = total_rows.scalar_one()
 

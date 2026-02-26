@@ -173,7 +173,15 @@ async def accept_team_invitation(
     transaction: AsyncSession,
     token: str,
 ) -> Response:
-    """Accept a team invitation and create/link user to team.
+    """Accept any type of invitation using strategy pattern - NO BRANCHING!
+
+    This universal handler works for all invitation types:
+    - Team member invitations
+    - Roster member invitations
+    - Guest brand invitations (future)
+    - Agency partner invitations (future)
+
+    Each type's specific logic is handled by its registered handler.
 
     Args:
         request: Litestar request object
@@ -186,6 +194,8 @@ async def accept_team_invitation(
     Raises:
         HTTPException: If token is invalid or expired
     """
+    from app.invitations import InvitationType, get_handler
+
     if not token:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
@@ -201,29 +211,54 @@ async def accept_team_invitation(
             detail="Invalid or expired invitation. Please request a new invitation.",
         )
 
-    team_id = invitation_data["team_id"]
-    invited_email = invitation_data["invited_email"]
+    # Extract universal fields
+    team_id: int = int(invitation_data["team_id"])  # type: ignore[arg-type]
+    invited_email: str = str(invitation_data["invited_email"])
 
-    # Check if user exists for this email
+    # Get invitation type and context from universal format
+    invitation_type_str = invitation_data.get("invitation_type", "team_member")
+    raw_context = invitation_data.get("invitation_context", {})
+    invitation_context: dict = raw_context if isinstance(raw_context, dict) else {}
+
+    try:
+        invitation_type = InvitationType(invitation_type_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f"Unknown invitation type: {invitation_type_str}",
+        )
+
+    # Get handler for this invitation type
+    handler = get_handler(invitation_type)
+
+    # Create or get user (same for all types)
     user_stmt = select(User).where(User.email == invited_email)
     user_result = await transaction.execute(user_stmt)
     user = user_result.scalar_one_or_none()
 
     if not user:
         # Create new user
+        # Get user name from handler (e.g., roster name), or use email prefix as fallback
+        user_name = await handler.get_user_name(transaction, invited_email, invitation_context)
+        if not user_name:
+            user_name = str(invited_email).split("@")[0]  # Fallback to email prefix
+
         user = User(
             email=invited_email,
-            name=str(invited_email).split("@")[0],  # Use email prefix as default name
+            name=user_name,
             email_verified=True,  # User proved they have access to the email by clicking the link
         )
         transaction.add(user)
         await transaction.flush()  # Flush to get user.id
-        logger.info(f"Created new user {user.id} from team invitation (email={invited_email})")
+        logger.info(f"Created new user {user.id} from {invitation_type.value} invitation (email={invited_email})")
     else:
         # Mark email as verified (user proved they have access to the email)
         if not user.email_verified:
             user.email_verified = True
-            logger.info(f"Marked user {user.id} email as verified via team invitation")
+            logger.info(f"Marked user {user.id} email as verified via {invitation_type.value} invitation")
+
+    # Determine role level from handler (NO BRANCHING!)
+    role_level = RoleLevel(handler.get_role_level())
 
     # Check if user is already in this team
     role_check_stmt = select(Role).where(
@@ -234,21 +269,31 @@ async def accept_team_invitation(
     existing_role = role_check_result.scalar_one_or_none()
 
     if existing_role:
-        logger.warning(f"User {user.id} already has role in team {team_id}, continuing anyway")
+        # Update existing role to match invitation (in case role level changed)
+        existing_role.role_level = role_level
+        logger.info(f"Updated user {user.id} role in team {team_id} to {role_level}")
     else:
-        # Create role linking user to team (default: MEMBER)
+        # Create role linking user to team
         role = Role(
             user_id=user.id,
             team_id=team_id,
-            role_level=RoleLevel.MEMBER,
+            role_level=role_level,
         )
         transaction.add(role)
-        logger.info(f"Added user {user.id} to team {team_id} as MEMBER")
+        logger.info(f"Added user {user.id} to team {team_id} as {role_level}")
 
     # Update user state to ACTIVE if they were in NEEDS_TEAM state
     if user.state == UserStates.NEEDS_TEAM:
         user.state = UserStates.ACTIVE
         logger.info(f"Updated user {user.id} state to ACTIVE")
+
+    # Execute type-specific post-accept logic (NO BRANCHING!)
+    await handler.post_accept_hook(
+        session=transaction,
+        user_id=user.id,
+        team_id=team_id,
+        invitation_context=invitation_context,
+    )
 
     # Mark invitation as accepted (with lock to prevent race conditions)
     from app.auth.crypto import hash_token as hash_token_func
@@ -275,7 +320,9 @@ async def accept_team_invitation(
     # Redirect to frontend success page
     frontend_url = config.SUCCESS_REDIRECT_URL
 
-    logger.info(f"User {user.id} accepted team {team_id} invitation, redirecting to {frontend_url}")
+    logger.info(
+        f"User {user.id} accepted {invitation_type.value} invitation for team {team_id}, redirecting to {frontend_url}"
+    )
     return Response(
         content="",
         status_code=HTTP_302_FOUND,

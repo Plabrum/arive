@@ -301,6 +301,31 @@ class Campaign(TeamScopedBase, ThreadableMixin):
 - Real-time updates via WebSocket
 - See `backend/app/threads/README.md` for full details
 
+### 7. Roster Member Invitation System
+
+Roster members (talent/influencers) can be invited to access their own campaigns via a limited-access portal.
+
+**Key Components:**
+- `Roster.roster_user_id` - Links roster record to user account
+- `RoleLevel.ROSTER_MEMBER` - Role with campaign-scoped access
+- `TeamInvitationToken.roster_id` - Reuses team invitation infrastructure
+- `app.utils.campaign_access` - Policy-based campaign filtering system
+
+**Invitation Flow:**
+1. Execute `InviteRosterMember` action on roster record (requires email)
+2. Generates token via `generate_roster_invitation_link()` in `app/roster/utils.py`
+3. Email sent with invitation link (frontend `/invite/accept?token=...`)
+4. User accepts → account created → linked to roster → assigned ROSTER_MEMBER role
+5. User logs in and sees only campaigns where `assigned_roster_id = roster.id`
+
+**Campaign Access Filtering:**
+Campaign access uses a policy-based system in `app/utils/campaign_access.py`:
+- **Roster members**: See only campaigns assigned to them
+- **Guest brands** (future): See campaigns they're added to
+- **Team members**: See all campaigns (via RLS)
+
+Filtering is applied automatically in `BaseObject.get_list()` for all object types.
+
 ## Testing
 
 ### Writing Tests

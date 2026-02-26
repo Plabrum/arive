@@ -37,6 +37,13 @@ class Roster(
         index=True,
     )
 
+    # Link to the User account for this roster member (when they get invited)
+    roster_user_id: Mapped[Sqid | None] = mapped_column(
+        sa.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # Basic fields
     name: Mapped[str] = mapped_column(sa.Text, nullable=False, index=True)
     email: Mapped[str | None] = mapped_column(sa.Text, nullable=True, index=True)
@@ -73,6 +80,12 @@ class Roster(
 
     # Relationship to user (who owns/manages this roster member)
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
+    # The user account that this roster member logs in with
+    roster_user: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[roster_user_id],
+    )
 
     # Relationship to address
     address: Mapped["Address | None"] = relationship(

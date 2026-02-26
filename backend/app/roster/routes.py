@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC
 
 from litestar import Request, Router, get, post
@@ -12,6 +13,8 @@ from app.roster.schemas import RosterSchema, RosterUpdateSchema
 from app.threads.models import Thread
 from app.utils.db import get_or_404, update_model
 from app.utils.sqids import Sqid
+
+logger = logging.getLogger(__name__)
 
 
 @get("/{id:str}")
@@ -168,6 +171,7 @@ async def update_roster(
     )
 
 
+# Authenticated roster router
 roster_router = Router(
     path="/roster",
     guards=[requires_session],
