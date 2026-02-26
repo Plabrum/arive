@@ -2,7 +2,7 @@ import { useParams } from '@tanstack/react-router';
 import { ObjectActions } from '@/components/object-detail';
 import { ObjectDetailTabs } from '@/components/object-detail-tabs';
 import { PageTopBar } from '@/components/page-topbar';
-import { RosterFields } from '@/components/roster-detail';
+import { RosterFields, RosterMediaKit } from '@/components/roster-detail';
 import { TabsContent } from '@/components/ui/tabs';
 import { ActionGroupType } from '@/openapi/ariveAPI.schemas';
 import { useRosterIdGetRosterSuspense } from '@/openapi/roster/roster';
@@ -24,7 +24,10 @@ export function RosterDetailPage() {
       }
     >
       <ObjectDetailTabs
-        tabs={[{ value: 'summary', label: 'Summary' }]}
+        tabs={[
+          { value: 'summary', label: 'Summary' },
+          { value: 'media-kit', label: 'Media Kit' },
+        ]}
         defaultTab="summary"
       >
         <TabsContent value="summary" className="space-y-6">
@@ -35,6 +38,10 @@ export function RosterDetailPage() {
               <RosterFields roster={data} />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="media-kit">
+          <RosterMediaKit roster={data} />
         </TabsContent>
       </ObjectDetailTabs>
     </PageTopBar>
