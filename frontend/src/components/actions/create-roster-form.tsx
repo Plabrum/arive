@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { RosterCreateSchema } from '@/openapi/ariveAPI.schemas';
+import { useState } from 'react';
 
 const {
   FormModal,
@@ -45,13 +47,21 @@ export function CreateRosterForm({
   isSubmitting,
   actionLabel,
 }: CreateRosterFormProps) {
+  const [sameAsMailing, setSameAsMailing] = useState(false);
+
   return (
     <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={actionLabel}
       subTitle="Fill out the form below to create a new roster member."
-      onSubmit={onSubmit}
+      onSubmit={(data) => {
+        // If "same as mailing" is checked, copy mailing_address to address
+        if (sameAsMailing) {
+          data.address = data.mailing_address;
+        }
+        onSubmit(data);
+      }}
       isSubmitting={isSubmitting}
       submitText="Create Roster Member"
     >
@@ -107,7 +117,29 @@ export function CreateRosterForm({
         />
 
         {/* Address Section */}
-        <FormAddress name="address" />
+        <div className="space-y-4">
+          {/* Mailing Address (first) */}
+          <FormAddress name="mailing_address" label="Mailing Address" />
+
+          {/* Home Address (second, with checkbox) */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="same-as-mailing"
+                checked={sameAsMailing}
+                onCheckedChange={(checked) => setSameAsMailing(checked === true)}
+              />
+              <label
+                htmlFor="same-as-mailing"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Same as mailing address
+              </label>
+            </div>
+
+            {!sameAsMailing && <FormAddress name="address" label="Home Address" />}
+          </div>
+        </div>
 
         {/* Birthday & Gender Section */}
         <div className="space-y-4 rounded-lg border p-4">
